@@ -87,7 +87,7 @@ func (c *Client) Ls(path string, onlyFolder, countSubFolder, removeHidden bool) 
 func (c *Client) Info(path string) (respFileInfo *FileInfo, err error) {
 	defer panicAttack(&err)
 
-	url := fmt.Sprintf("fs/info/%s", path)
+	url := fmt.Sprintf("fs/info/%s", encodePath(path))
 
 	resp, err := c.request(HTTP_METHOD_GET, url, nil)
 	checkErr(err)

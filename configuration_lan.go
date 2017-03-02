@@ -81,7 +81,7 @@ func (c *Client) LanConfig(iface, hostID string, reqLC *LanConfig) (respLanConfi
 	resp, err := c.request(method, "lan/config/", body)
 	checkErr(err)
 	respLanConfig = new(LanConfig)
-	err = ResultromResponse(resp, respLanConfig)
+	err = ResultFromResponse(resp, respLanConfig)
 	checkErr(err)
 	return
 }
@@ -91,7 +91,7 @@ func (c *Client) Interfaces() (ifaceStats []InterfaceStat, err error) {
 
 	resp, err := c.request(HTTP_METHOD_GET, "lan/browser/interfaces/", nil)
 	checkErr(err)
-	err = ResultromResponse(resp, ifaceStats)
+	err = ResultFromResponse(resp, ifaceStats)
 	checkErr(err)
 	return
 }
@@ -102,7 +102,7 @@ func (c *Client) Interface(iface string) (lanHosts []LanHost, err error) {
 	url := fmt.Sprintf("lan/browser/%s/", iface)
 	resp, err := c.request(HTTP_METHOD_GET, url, nil)
 	checkErr(err)
-	err = ResultromResponse(resp, &lanHosts)
+	err = ResultFromResponse(resp, &lanHosts)
 	checkErr(err)
 	return
 }
@@ -116,7 +116,7 @@ func (c *Client) InterfaceHost(iface, hostID string, reqHost *ReqHost) (lanHost 
 	resp, err := c.request(method, url, body)
 	checkErr(err)
 	lanHost = new(LanHost)
-	err = ResultromResponse(resp, lanHost)
+	err = ResultFromResponse(resp, lanHost)
 	checkErr(err)
 	return
 }

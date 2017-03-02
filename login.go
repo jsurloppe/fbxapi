@@ -82,7 +82,7 @@ func (c *Client) Authorize(tokenReq TokenRequest) (respAuth *RespAuthorize, err 
 	resp, err := c.request(HTTP_METHOD_POST, "login/authorize/", tokenReqJSON)
 	checkErr(err)
 	respAuth = new(RespAuthorize)
-	err = ResultromResponse(resp, respAuth)
+	err = ResultFromResponse(resp, respAuth)
 	checkErr(err)
 
 	return
@@ -95,7 +95,7 @@ func (c *Client) TrackLogin(track_id int) (respAuth *RespAuthorizeTrack, err err
 	resp, err := c.request(HTTP_METHOD_GET, url, nil)
 	checkErr(err)
 	respAuth = new(RespAuthorizeTrack)
-	err = ResultromResponse(resp, respAuth)
+	err = ResultFromResponse(resp, respAuth)
 	checkErr(err)
 
 	return
@@ -107,7 +107,7 @@ func (c *Client) Login() (respLogin *RespLogin, err error) {
 	resp, err := c.request(HTTP_METHOD_GET, "login/", nil)
 	checkErr(err)
 	respLogin = new(RespLogin)
-	err = ResultromResponse(resp, respLogin)
+	err = ResultFromResponse(resp, respLogin)
 	checkErr(err)
 
 	return
@@ -121,7 +121,7 @@ func (c *Client) Session(reqSess ReqSession) (respSess *RespSession, err error) 
 	resp, err := c.request(HTTP_METHOD_POST, "login/session/", reqSessJson)
 	checkErr(err)
 	respSess = new(RespSession)
-	err = ResultromResponse(resp, respSess)
+	err = ResultFromResponse(resp, respSess)
 	checkErr(err)
 
 	return

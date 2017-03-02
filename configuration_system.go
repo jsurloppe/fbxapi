@@ -19,7 +19,7 @@ func (c *Client) System() (sysConf *SystemConfig, err error) {
 	resp, err := c.request(HTTP_METHOD_GET, "system/", nil)
 	checkErr(err)
 	sysConf = new(SystemConfig)
-	err = ResultromResponse(resp, &sysConf)
+	err = ResultFromResponse(resp, &sysConf)
 	checkErr(err)
 	return
 }

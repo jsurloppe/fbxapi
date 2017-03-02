@@ -15,6 +15,6 @@ func (c *Client) FTPConfig(ftpConf *FTPConfig) (respFTPConf *FTPConfig, err erro
 	resp, err := c.request(method, "ftp/config/", body)
 	checkErr(err)
 	respFTPConf = new(FTPConfig)
-	ResultromResponse(resp, respFTPConf)
+	ResultFromResponse(resp, respFTPConf)
 	return
 }

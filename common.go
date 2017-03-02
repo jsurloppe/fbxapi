@@ -79,7 +79,7 @@ func (fb *Freebox) fromServiceEntry(service *mdns.ServiceEntry) {
 	}
 }
 
-func ResultromResponse(resp *Response, result interface{}) (err error) {
+func ResultFromResponse(resp *Response, result interface{}) (err error) {
 	defer panicAttack(&err)
 	err = json.Unmarshal(resp.Result, &result)
 	checkErr(err)

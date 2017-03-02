@@ -59,7 +59,7 @@ func (c *Client) Tasks() (respFSTask *FSTask, err error) {
 	checkErr(err)
 
 	respFSTask = new(FSTask)
-	err = ResultromResponse(resp, respFSTask)
+	err = ResultFromResponse(resp, respFSTask)
 	checkErr(err)
 
 	return
@@ -78,7 +78,7 @@ func (c *Client) Ls(path string, onlyFolder, countSubFolder, removeHidden bool) 
 	resp, err := c.request(HTTP_METHOD_GET, url, nil)
 	checkErr(err)
 
-	err = ResultromResponse(resp, &respFileInfo)
+	err = ResultFromResponse(resp, &respFileInfo)
 	checkErr(err)
 
 	return
@@ -93,7 +93,7 @@ func (c *Client) Info(path string) (respFileInfo *FileInfo, err error) {
 	checkErr(err)
 
 	respFileInfo = new(FileInfo)
-	err = ResultromResponse(resp, respFileInfo)
+	err = ResultFromResponse(resp, respFileInfo)
 	checkErr(err)
 
 	return

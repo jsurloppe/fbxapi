@@ -3,7 +3,7 @@ package fbxapi
 import (
 	"encoding/base64"
 	"fmt"
-	"io"
+	"net/http"
 	"strconv"
 	"strings"
 )
@@ -99,13 +99,13 @@ func (c *Client) Info(path string) (respFileInfo *FileInfo, err error) {
 	return
 }
 
-func (c *Client) Dl(path string) (reader io.ReadCloser, err error) {
+func (c *Client) Dl(path string) (resp *http.Response, err error) {
 	defer panicAttack(&err)
 
 	url := fmt.Sprintf("dl/%s", encodePath(path))
 
-	resp, err := c.newRequest(HTTP_METHOD_GET, url, nil)
+	resp, err = c.newRequest(HTTP_METHOD_GET, url, nil)
 	checkErr(err)
 
-	return resp.Body, nil
+	return resp, nil
 }

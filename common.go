@@ -24,6 +24,7 @@ const HTTP_METHOD_DELETE = "DELETE"
 
 const PROTO_HTTP = "http"
 const PROTO_HTTPS = "https"
+const PROTO_WS = "ws"
 
 type Response struct {
 	Success   bool            `json:"success"`
@@ -34,19 +35,19 @@ type Response struct {
 }
 
 type Client struct {
-	Host         string
-	Port         int
-	Version      int
-	SSL          bool
-	SessionToken string
 	http         *http.Client
 	mutex        sync.Mutex
+	Freebox      *Freebox
+	AppID        string
+	Version      int
+	SessionToken string
 }
 
 type Freebox struct {
 	Host string `json:"host"`
 	Port int    `json:"port"`
 	APIVersion
+	RespAuthorize
 }
 
 func (fb *Freebox) fromServiceEntry(service *mdns.ServiceEntry) {
@@ -86,61 +87,23 @@ func ResultFromResponse(resp *Response, result interface{}) (err error) {
 	return
 }
 
-func NewClient(host string, port, version int, ssl bool) (client *Client, err error) {
-	defer panicAttack(&err)
-
-	if strings.HasSuffix(host, ".") {
-		addr, err := MdnsResolve(host)
-		checkErr(err)
-		host = addr.String()
-	}
-
-	tr := &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: true}}
-	httpClient := &http.Client{Transport: tr}
-
-	client = &Client{
-		Host:    host,
-		Port:    port,
-		Version: version,
-		SSL:     ssl,
-		http:    httpClient,
-	}
-	return
-}
-
-func NewClientFromFreebox(freebox Freebox, ssl bool) (client *Client, err error) {
+// NewClient create a client from a freebox instance
+func NewClient(appId string, freebox *Freebox) (client *Client, err error) {
 	defer panicAttack(&err)
 
 	iVersion, err := APIVersionToInt(freebox.APIVersion.APIVersion)
 	checkErr(err)
 
-	if ssl {
-		tr := &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: true}}
-		httpClient := &http.Client{Transport: tr}
+	tr := &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: true}}
+	httpClient := &http.Client{Transport: tr}
 
-		client = &Client{
-			Host:    freebox.RemoteAPIDomain,
-			Port:    freebox.RemoteHTTPSPort,
-			Version: iVersion,
-			SSL:     true,
-			http:    httpClient,
-		}
-	} else {
-		host := freebox.Host
-		if strings.HasSuffix(host, ".") {
-			addr, err := MdnsResolve(host)
-			checkErr(err)
-			host = addr.String()
-		}
-
-		client = &Client{
-			Host:    host,
-			Port:    freebox.Port,
-			Version: iVersion,
-			SSL:     false,
-			http:    new(http.Client),
-		}
+	client = &Client{
+		Freebox: freebox,
+		http:    httpClient,
+		Version: iVersion,
+		AppID:   appId,
 	}
+
 	return
 }
 
@@ -157,17 +120,13 @@ func SelectRequestMethod(updateMethod string, fn func(interface{}) bool, data in
 	return
 }
 
-func (c *Client) makeUrl(endpoint string) string {
-	proto := PROTO_HTTP
-	if c.SSL {
-		proto = PROTO_HTTPS
-	}
-	return fmt.Sprintf("%s://%s:%d/api/v%d/%s", proto, c.Host, c.Port, c.Version, endpoint)
+func (c *Client) makeUrl(endpoint, proto string) string {
+	return fmt.Sprintf("%s://%s:%d/api/v%d/%s", proto, c.Freebox.Host, c.Freebox.Port, c.Version, endpoint)
 }
 
 func (c *Client) newRequest(method, endpoint string, body []byte) (resp *http.Response, err error) {
 	bodyBuffer := bytes.NewBuffer(body)
-	url := c.makeUrl(endpoint)
+	url := c.makeUrl(endpoint, PROTO_HTTPS)
 
 	req, err := http.NewRequest(method, url, bodyBuffer)
 	if err != nil {
@@ -185,8 +144,12 @@ func (c *Client) newRequest(method, endpoint string, body []byte) (resp *http.Re
 	return
 }
 
-func (c *Client) request(method, endpoint string, body []byte) (result *Response, err error) {
+func (c *Client) httpRequest(method, endpoint string, body []byte, openSession bool) (result *Response, err error) {
 	defer panicAttack(&err)
+
+	if openSession && len(c.Freebox.AppToken) > 0 && len(c.SessionToken) == 0 {
+		c.OpenSession(c.AppID, c.Freebox.AppToken)
+	}
 
 	resp, err := c.newRequest(method, endpoint, body)
 	checkErr(err)

@@ -16,7 +16,7 @@ type SystemConfig struct {
 
 func (c *Client) System() (sysConf *SystemConfig, err error) {
 	defer panicAttack(&err)
-	resp, err := c.request(HTTP_METHOD_GET, "system/", nil)
+	resp, err := c.httpRequest(HTTP_METHOD_GET, "system/", nil, true)
 	checkErr(err)
 	sysConf = new(SystemConfig)
 	err = ResultFromResponse(resp, &sysConf)
@@ -26,7 +26,7 @@ func (c *Client) System() (sysConf *SystemConfig, err error) {
 
 func (c *Client) Reboot() (err error) {
 	defer panicAttack(&err)
-	_, err = c.request(HTTP_METHOD_POST, "reboot/", nil)
+	_, err = c.httpRequest(HTTP_METHOD_POST, "reboot/", nil, true)
 	checkErr(err)
 	return
 }

@@ -79,7 +79,7 @@ func (c *Client) Authorize(tokenReq TokenRequest) (respAuth *RespAuthorize, err 
 	defer panicAttack(&err)
 	tokenReqJSON, err := json.Marshal(tokenReq)
 	checkErr(err)
-	resp, err := c.request(HTTP_METHOD_POST, "login/authorize/", tokenReqJSON)
+	resp, err := c.httpRequest(HTTP_METHOD_POST, "login/authorize/", tokenReqJSON, false)
 	checkErr(err)
 	respAuth = new(RespAuthorize)
 	err = ResultFromResponse(resp, respAuth)
@@ -92,7 +92,7 @@ func (c *Client) TrackLogin(track_id int) (respAuth *RespAuthorizeTrack, err err
 	defer panicAttack(&err)
 
 	url := fmt.Sprintf("login/authorize/%d", track_id)
-	resp, err := c.request(HTTP_METHOD_GET, url, nil)
+	resp, err := c.httpRequest(HTTP_METHOD_GET, url, nil, false)
 	checkErr(err)
 	respAuth = new(RespAuthorizeTrack)
 	err = ResultFromResponse(resp, respAuth)
@@ -104,7 +104,7 @@ func (c *Client) TrackLogin(track_id int) (respAuth *RespAuthorizeTrack, err err
 func (c *Client) Login() (respLogin *RespLogin, err error) {
 	defer panicAttack(&err)
 
-	resp, err := c.request(HTTP_METHOD_GET, "login/", nil)
+	resp, err := c.httpRequest(HTTP_METHOD_GET, "login/", nil, false)
 	checkErr(err)
 	respLogin = new(RespLogin)
 	err = ResultFromResponse(resp, respLogin)
@@ -118,7 +118,7 @@ func (c *Client) Session(reqSess ReqSession) (respSess *RespSession, err error) 
 
 	reqSessJson, err := json.Marshal(reqSess)
 	checkErr(err)
-	resp, err := c.request(HTTP_METHOD_POST, "login/session/", reqSessJson)
+	resp, err := c.httpRequest(HTTP_METHOD_POST, "login/session/", reqSessJson, false)
 	checkErr(err)
 	respSess = new(RespSession)
 	err = ResultFromResponse(resp, respSess)
@@ -148,7 +148,7 @@ func (c *Client) Logout() (err error) {
 	defer panicAttack(&err)
 
 	if len(c.SessionToken) > 0 {
-		_, err = c.request(HTTP_METHOD_POST, "login/logout/", nil)
+		_, err = c.httpRequest(HTTP_METHOD_POST, "login/logout/", nil, false)
 		checkErr(err)
 		c.SessionToken = ""
 	}

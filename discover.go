@@ -55,30 +55,27 @@ func MdnsResolve(domain string) (host net.IP, err error) {
 	return
 }
 
-func MdnsDiscover() (freeboxs []*Freebox) {
-	entriesCh := make(chan *mdns.ServiceEntry, 4)
+func MdnsDiscover(fbChan chan<- *Freebox) {
+	entriesCh := make(chan *mdns.ServiceEntry)
+
 	go func() {
 		for service := range entriesCh {
+			fmt.Println(service)
 			freebox := new(Freebox)
 			freebox.fromServiceEntry(service)
-			freeboxs = append(freeboxs, freebox)
+			fmt.Println("gorou")
+			fbChan <- freebox
 		}
 	}()
 
 	mdns.Lookup(SERVICE, entriesCh)
+	fmt.Println("will close")
 	close(entriesCh)
-	return freeboxs
 }
 
-func HttpDiscover(host string, port int, ssl bool) (freebox *Freebox, err error) {
+func HttpDiscover(host string, port int) (freebox *Freebox, err error) {
 	defer panicAttack(&err)
-
-	proto := "http"
-	if ssl {
-		proto = "https"
-	}
-
-	url := fmt.Sprintf("%s://%s:%d/api_version", proto, host, port)
+	url := fmt.Sprintf("https://%s:%d/api_version", host, port)
 
 	tr := &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: true}}
 	client := &http.Client{Transport: tr}

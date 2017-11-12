@@ -78,7 +78,7 @@ func (c *Client) LanConfig(iface, hostID string, reqLC *LanConfig) (respLanConfi
 
 	method, body, err := SelectRequestMethod(HTTP_METHOD_PUT, dataIsNil, reqLC)
 	checkErr(err)
-	resp, err := c.request(method, "lan/config/", body)
+	resp, err := c.httpRequest(method, "lan/config/", body, true)
 	checkErr(err)
 	respLanConfig = new(LanConfig)
 	err = ResultFromResponse(resp, respLanConfig)
@@ -89,7 +89,7 @@ func (c *Client) LanConfig(iface, hostID string, reqLC *LanConfig) (respLanConfi
 func (c *Client) Interfaces() (ifaceStats []InterfaceStat, err error) {
 	defer panicAttack(&err)
 
-	resp, err := c.request(HTTP_METHOD_GET, "lan/browser/interfaces/", nil)
+	resp, err := c.httpRequest(HTTP_METHOD_GET, "lan/browser/interfaces/", nil, true)
 	checkErr(err)
 	err = ResultFromResponse(resp, ifaceStats)
 	checkErr(err)
@@ -100,7 +100,7 @@ func (c *Client) Interface(iface string) (lanHosts []LanHost, err error) {
 	defer panicAttack(&err)
 
 	url := fmt.Sprintf("lan/browser/%s/", iface)
-	resp, err := c.request(HTTP_METHOD_GET, url, nil)
+	resp, err := c.httpRequest(HTTP_METHOD_GET, url, nil, true)
 	checkErr(err)
 	err = ResultFromResponse(resp, &lanHosts)
 	checkErr(err)
@@ -113,7 +113,7 @@ func (c *Client) InterfaceHost(iface, hostID string, reqHost *ReqHost) (lanHost 
 	method, body, err := SelectRequestMethod(HTTP_METHOD_PUT, dataIsNil, reqHost)
 	checkErr(err)
 	url := fmt.Sprintf("lan/browser/%s/%s/", iface, hostID)
-	resp, err := c.request(method, url, body)
+	resp, err := c.httpRequest(method, url, body, true)
 	checkErr(err)
 	lanHost = new(LanHost)
 	err = ResultFromResponse(resp, lanHost)
@@ -124,7 +124,7 @@ func (c *Client) InterfaceHost(iface, hostID string, reqHost *ReqHost) (lanHost 
 func (c *Client) WakeOnLan(iface string) (resp *Response, err error) {
 	defer panicAttack(&err)
 	url := fmt.Sprintf("lan/wol/%s/", iface)
-	resp, err = c.request(HTTP_METHOD_GET, url, nil)
+	resp, err = c.httpRequest(HTTP_METHOD_GET, url, nil, true)
 	checkErr(err)
 	return
 }

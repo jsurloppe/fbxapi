@@ -12,7 +12,7 @@ func (c *Client) FTPConfig(ftpConf *FTPConfig) (respFTPConf *FTPConfig, err erro
 
 	method, body, err := SelectRequestMethod(HTTP_METHOD_PUT, dataIsNil, ftpConf)
 	checkErr(err)
-	resp, err := c.request(method, "ftp/config/", body)
+	resp, err := c.httpRequest(method, "ftp/config/", body, true)
 	checkErr(err)
 	respFTPConf = new(FTPConfig)
 	ResultFromResponse(resp, respFTPConf)

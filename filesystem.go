@@ -55,7 +55,7 @@ func encodePath(path string) string {
 func (c *Client) Tasks() (respFSTask *FSTask, err error) {
 	defer panicAttack(&err)
 
-	resp, err := c.request(HTTP_METHOD_GET, "fs/tasks/", nil)
+	resp, err := c.httpRequest(HTTP_METHOD_GET, "fs/tasks/", nil, true)
 	checkErr(err)
 
 	respFSTask = new(FSTask)
@@ -75,7 +75,7 @@ func (c *Client) Ls(path string, onlyFolder, countSubFolder, removeHidden bool) 
 	url := fmt.Sprintf("fs/ls/%s?onlyFolder=%s&countSubFolder=%s&removeHidden=%s",
 		encodePath(path), strOnlyFolder, strCountSubFoder, strRemoveHidden)
 
-	resp, err := c.request(HTTP_METHOD_GET, url, nil)
+	resp, err := c.httpRequest(HTTP_METHOD_GET, url, nil, true)
 	checkErr(err)
 
 	err = ResultFromResponse(resp, &respFileInfo)
@@ -89,7 +89,7 @@ func (c *Client) Info(path string) (respFileInfo *FileInfo, err error) {
 
 	url := fmt.Sprintf("fs/info/%s", encodePath(path))
 
-	resp, err := c.request(HTTP_METHOD_GET, url, nil)
+	resp, err := c.httpRequest(HTTP_METHOD_GET, url, nil, true)
 	checkErr(err)
 
 	respFileInfo = new(FileInfo)

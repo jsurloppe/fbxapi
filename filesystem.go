@@ -2,9 +2,6 @@ package fbxapi
 
 import (
 	"encoding/base64"
-	"fmt"
-	"net/http"
-	"strconv"
 	"strings"
 )
 
@@ -44,6 +41,36 @@ type FileInfo struct {
 	FileCount    int    `json:"filecount"`
 }
 
+type FileUpload struct {
+	ID         int    `json:"id"`
+	Size       int    `json:"size"`
+	Uploaded   int    `json:"uploaded"`
+	Status     string `json:"status"`
+	StartDate  int    `json:"start_date"`
+	LastUpdate int    `json:"last_update"`
+	UploadName string `json:"upload_name"`
+	Dirname    string `json:"dirname"`
+}
+
+type FileUploadStartAction struct {
+	RequestID int    `json:"request_id,omitempty"`
+	Action    string `json:"action"`
+	Size      int    `json:"size"`
+	Dirname   string `json:"dirname"`
+	Filename  string `json:"filename"`
+	Force     string `json:"force"`
+}
+
+type FileUploadFinalizeAction struct {
+	RequestID int    `json:"request_id,omitempty"`
+	Action    string `json:"action"`
+}
+
+type FileUploadCancelAction struct {
+	RequestID int    `json:"request_id,omitempty"`
+	Action    string `json:"action"`
+}
+
 func encodePath(path string) string {
 	if !strings.HasPrefix(path, "/") {
 		path = "/" + path
@@ -52,20 +79,12 @@ func encodePath(path string) string {
 	return base64.StdEncoding.EncodeToString([]byte(path))
 }
 
-func (c *Client) Tasks() (respFSTask *FSTask, err error) {
-	defer panicAttack(&err)
-
-	resp, err := c.httpRequest(HTTP_METHOD_GET, "fs/tasks/", nil, true)
-	checkErr(err)
-
-	respFSTask = new(FSTask)
-	err = ResultFromResponse(resp, respFSTask)
-	checkErr(err)
-
-	return
+var TasksEP = &Endpoint{
+	Verb: HTTP_METHOD_GET,
+	Url:  "fs/tasks/",
 }
 
-func (c *Client) Ls(path string, onlyFolder, countSubFolder, removeHidden bool) (respFileInfo []FileInfo, err error) {
+/*func (c *Client) Ls(path string, onlyFolder, countSubFolder, removeHidden bool) (respFileInfo []FileInfo, err error) {
 	defer panicAttack(&err)
 
 	strOnlyFolder := strconv.FormatBool(onlyFolder)
@@ -75,6 +94,7 @@ func (c *Client) Ls(path string, onlyFolder, countSubFolder, removeHidden bool) 
 	url := fmt.Sprintf("fs/ls/%s?onlyFolder=%s&countSubFolder=%s&removeHidden=%s",
 		encodePath(path), strOnlyFolder, strCountSubFoder, strRemoveHidden)
 
+	c.Query()
 	resp, err := c.httpRequest(HTTP_METHOD_GET, url, nil, true)
 	checkErr(err)
 
@@ -108,4 +128,4 @@ func (c *Client) Dl(path string) (resp *http.Response, err error) {
 	checkErr(err)
 
 	return resp, nil
-}
+}*/

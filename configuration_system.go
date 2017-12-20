@@ -14,19 +14,13 @@ type SystemConfig struct {
 	BoxAuthenticated bool   `json:"box_authenticated"`
 }
 
-func (c *Client) System() (sysConf *SystemConfig, err error) {
-	defer panicAttack(&err)
-	resp, err := c.httpRequest(HTTP_METHOD_GET, "system/", nil, true)
-	checkErr(err)
-	sysConf = new(SystemConfig)
-	err = ResultFromResponse(resp, &sysConf)
-	checkErr(err)
-	return
+var SystemEP = &Endpoint{
+	Verb:              HTTP_METHOD_GET,
+	Url:               "system/",
+	UrlParamsRequired: true,
 }
 
-func (c *Client) Reboot() (err error) {
-	defer panicAttack(&err)
-	_, err = c.httpRequest(HTTP_METHOD_POST, "reboot/", nil, true)
-	checkErr(err)
-	return
+var RebootEP = &Endpoint{
+	Verb: HTTP_METHOD_POST,
+	Url:  "system/reboot/",
 }

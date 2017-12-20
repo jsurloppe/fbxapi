@@ -4,8 +4,6 @@ import (
 	"crypto/hmac"
 	"crypto/sha1"
 	"encoding/hex"
-	"encoding/json"
-	"fmt"
 )
 
 const AUTH_STATUS_GRANTED = "granted"
@@ -45,21 +43,21 @@ type APIVersion struct {
 	RemoteAPIDomain      string `json:"api_domain"`
 }
 
-type RespAuthorize struct {
+type Authorization struct {
 	AppToken string `json:"app_token"`
 	TrackID  int    `json:"track_id"`
 }
 
-type RespAuthorizeTrack struct {
+type AuthorizationState struct {
 	Status    string `json:"status"`
 	Challenge string `json:"challenge"`
 }
 
-func (resp *RespAuthorizeTrack) isGranted() bool {
+func (resp *AuthorizationState) isGranted() bool {
 	return resp.Status == AUTH_STATUS_GRANTED
 }
 
-func (resp *RespAuthorizeTrack) isPending() bool {
+func (resp *AuthorizationState) isPending() bool {
 	return resp.Status == AUTH_STATUS_PENDING
 }
 
@@ -75,53 +73,66 @@ type RespSession struct {
 	Permissions  map[string]bool `json:"permissions"`
 }
 
-func (c *Client) Authorize(tokenReq TokenRequest) (respAuth *RespAuthorize, err error) {
+var AuthorizeEP = &Endpoint{
+	Verb:         HTTP_METHOD_POST,
+	Url:          "login/authorize",
+	NoAuth:       true,
+	BodyRequired: true,
+}
+
+var TrackAuthorizeEP = &Endpoint{
+	Verb:              HTTP_METHOD_GET,
+	Url:               "login/authorize/{{.track_id}}",
+	NoAuth:            true,
+	UrlParamsRequired: true,
+}
+
+func (c *Client) Register(tokenReq TokenRequest) (respAuth *Authorization, err error) {
+	err = c.Query(AuthorizeEP).With(tokenReq).Do(respAuth)
+	checkErr(err)
+	return
+}
+
+/*func (c *Client) Authorize(tokenReq TokenRequest) (respAuth *Authorization, err error) {
 	defer panicAttack(&err)
 	tokenReqJSON, err := json.Marshal(tokenReq)
 	checkErr(err)
 	resp, err := c.httpRequest(HTTP_METHOD_POST, "login/authorize/", tokenReqJSON, false)
 	checkErr(err)
-	respAuth = new(RespAuthorize)
+	respAuth = new(Authorization)
 	err = ResultFromResponse(resp, respAuth)
 	checkErr(err)
 
 	return
-}
+}*/
 
-func (c *Client) TrackLogin(track_id int) (respAuth *RespAuthorizeTrack, err error) {
-	defer panicAttack(&err)
-
-	url := fmt.Sprintf("login/authorize/%d", track_id)
-	resp, err := c.httpRequest(HTTP_METHOD_GET, url, nil, false)
-	checkErr(err)
-	respAuth = new(RespAuthorizeTrack)
-	err = ResultFromResponse(resp, respAuth)
-	checkErr(err)
-
-	return
+var LoginEP = &Endpoint{
+	Verb:   HTTP_METHOD_GET,
+	Url:    "login/",
+	NoAuth: true,
 }
 
 func (c *Client) Login() (respLogin *RespLogin, err error) {
 	defer panicAttack(&err)
 
-	resp, err := c.httpRequest(HTTP_METHOD_GET, "login/", nil, false)
-	checkErr(err)
 	respLogin = new(RespLogin)
-	err = ResultFromResponse(resp, respLogin)
+	err = c.Query(LoginEP).Do(respLogin)
 	checkErr(err)
 
 	return
 }
 
+var SessionEP = &Endpoint{
+	Verb:   HTTP_METHOD_POST,
+	Url:    "login/session/",
+	NoAuth: true,
+}
+
 func (c *Client) Session(reqSess ReqSession) (respSess *RespSession, err error) {
 	defer panicAttack(&err)
 
-	reqSessJson, err := json.Marshal(reqSess)
-	checkErr(err)
-	resp, err := c.httpRequest(HTTP_METHOD_POST, "login/session/", reqSessJson, false)
-	checkErr(err)
 	respSess = new(RespSession)
-	err = ResultFromResponse(resp, respSess)
+	err = c.Query(SessionEP).With(reqSess).Do(respSess)
 	checkErr(err)
 
 	return
@@ -130,7 +141,7 @@ func (c *Client) Session(reqSess ReqSession) (respSess *RespSession, err error) 
 func (c *Client) OpenSession(appID, appToken string) (err error) {
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
-	defer panicAttack(&err)
+	// defer panicAttack(&err)
 
 	err = c.Logout()
 	checkErr(err)
@@ -144,11 +155,17 @@ func (c *Client) OpenSession(appID, appToken string) (err error) {
 	return
 }
 
+var LogoutEP = &Endpoint{
+	Verb:   HTTP_METHOD_POST,
+	Url:    "login/logout/",
+	NoAuth: true,
+}
+
 func (c *Client) Logout() (err error) {
 	defer panicAttack(&err)
 
 	if len(c.SessionToken) > 0 {
-		_, err = c.httpRequest(HTTP_METHOD_POST, "login/logout/", nil, false)
+		err = c.Query(LogoutEP).Do(nil)
 		checkErr(err)
 		c.SessionToken = ""
 	}

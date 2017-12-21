@@ -6,5 +6,5 @@ import (
 
 func TestTasks(t *testing.T) {
 	var data []FSTask
-	EndpointTester(t, TasksEP, &data, &FSTask{}, nil, nil)
+	EndpointTester(t, TasksEP, &data, nil, nil)
 }

@@ -29,12 +29,25 @@ func getFirst(rawResult json.RawMessage) map[string]interface{} {
 	return data[0]
 }
 
-func checkOrphans(aStruct interface{}, data map[string]interface{}) (bool, []string, []string) {
+func checkOrphans(aStruct interface{}, result json.RawMessage) (bool, []string, []string) {
 	t := reflect.TypeOf(aStruct).Elem()
 
+	data := make(map[string]interface{})
+	tehStruct := t
+
+	if data != nil {
+		switch t.Kind() {
+		case reflect.Slice:
+			data = getFirst(result)
+			tehStruct = t.Elem()
+		case reflect.Struct:
+			data = getData(result)
+		}
+	}
+
 	var structFields []string
-	for i := 0; i < t.NumField(); i++ {
-		tag := t.Field(i).Tag.Get("json")
+	for i := 0; i < tehStruct.NumField(); i++ {
+		tag := tehStruct.Field(i).Tag.Get("json")
 		tagName := strings.SplitN(tag, ",", 2)
 		if tagName[0] != "" {
 			structFields = append(structFields, tagName[0])
@@ -62,12 +75,12 @@ func checkOrphans(aStruct interface{}, data map[string]interface{}) (bool, []str
 	}
 
 	if len(newKeys) > 0 {
-		logrus.Warnf("%s has new fields: %v", t.Name(), newKeys)
+		logrus.Warnf("%s has new fields: %v", tehStruct.Name(), newKeys)
 		// spew.Dump(data)
 	}
 
 	if len(expiredKeys) > 0 {
-		logrus.Warnf("%s has expired fields: %v", t.Name(), expiredKeys)
+		logrus.Warnf("%s has expired fields: %v", tehStruct.Name(), expiredKeys)
 	}
 
 	return !(len(expiredKeys) == 0 && len(newKeys) == 0), newKeys, expiredKeys
@@ -75,21 +88,14 @@ func checkOrphans(aStruct interface{}, data map[string]interface{}) (bool, []str
 
 func failOnError(t *testing.T, err error) {
 	if err != nil {
-		t.Error(err)
+		t.Fatal(err)
 	}
 }
 
-func EndpointTester(t *testing.T, ep *Endpoint, data interface{}, base interface{}, urlparams map[string]string, body interface{}) {
+func EndpointTester(t *testing.T, ep *Endpoint, data interface{}, urlparams map[string]string, body interface{}) {
 	resp := new(APIResponse)
 	err := testClient.Query(ep).As(urlparams).With(body).Inspect(resp).Do(&data)
 	failOnError(t, err)
 
-	if data != nil {
-		switch reflect.TypeOf(data).Elem().Kind() {
-		case reflect.Slice:
-			checkOrphans(base, getFirst(resp.Result))
-		case reflect.Struct:
-			checkOrphans(base, getData(resp.Result))
-		}
-	}
+	checkOrphans(data, resp.Result)
 }

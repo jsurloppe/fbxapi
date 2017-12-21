@@ -121,8 +121,8 @@ func (q Query) Do(endStruct interface{}) (err error) {
 	resp, err := client.Do(req)
 	checkErr(err)
 
-	if resp.StatusCode == 400 {
-		panic(errors.New("Bad request"))
+	if resp.StatusCode >= 400 {
+		panic(errors.New(resp.Status))
 	}
 
 	defer resp.Body.Close()

@@ -5,7 +5,7 @@ import (
 )
 
 func TestSystem(t *testing.T) {
-	EndpointTester(t, SystemEP, &SystemConfig{}, &SystemConfig{}, nil, nil)
+	EndpointTester(t, SystemEP, &SystemConfig{}, nil, nil)
 }
 
 func TestReboot(t *testing.T) {

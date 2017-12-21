@@ -6,18 +6,18 @@ import (
 )
 
 func TestFTPConfig(t *testing.T) {
-	EndpointTester(t, CurrentFTPConfigEP, &FTPConfig{}, &FTPConfig{}, nil, nil)
+	EndpointTester(t, CurrentFTPConfigEP, &FTPConfig{}, nil, nil)
 }
 
 func TestUpdateFTPConfig(t *testing.T) {
 	t.SkipNow()
 	data := &FTPConfig{}
-	EndpointTester(t, CurrentFTPConfigEP, data, &FTPConfig{}, nil, nil)
+	EndpointTester(t, CurrentFTPConfigEP, data, nil, nil)
 	data.Enabled = false
 
-	EndpointTester(t, UpdateFTPConfigEP, &FTPConfig{}, &FTPConfig{}, nil, data)
+	EndpointTester(t, UpdateFTPConfigEP, &FTPConfig{}, nil, data)
 
 	data = &FTPConfig{}
-	EndpointTester(t, CurrentFTPConfigEP, data, &FTPConfig{}, nil, nil)
+	EndpointTester(t, CurrentFTPConfigEP, data, nil, nil)
 	fmt.Printf("%#v\n", data)
 }

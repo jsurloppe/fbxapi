@@ -94,7 +94,7 @@ func failOnError(t *testing.T, err error) {
 
 func EndpointTester(t *testing.T, ep *Endpoint, data interface{}, urlparams map[string]string, body interface{}) {
 	resp := new(APIResponse)
-	err := testClient.Query(ep).As(urlparams).With(body).Inspect(resp).Do(&data)
+	err := testClient.Query(ep).As(urlparams).WithBody(body).Inspect(resp).Do(&data)
 	failOnError(t, err)
 
 	checkOrphans(data, resp.Result)

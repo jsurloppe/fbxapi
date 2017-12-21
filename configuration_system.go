@@ -15,9 +15,8 @@ type SystemConfig struct {
 }
 
 var SystemEP = &Endpoint{
-	Verb:              HTTP_METHOD_GET,
-	Url:               "system/",
-	UrlParamsRequired: true,
+	Verb: HTTP_METHOD_GET,
+	Url:  "system/",
 }
 
 var RebootEP = &Endpoint{

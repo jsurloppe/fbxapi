@@ -74,22 +74,19 @@ var InterfacesEP = &Endpoint{
 }
 
 var InterfaceEP = &Endpoint{
-	Verb:              HTTP_METHOD_GET,
-	Url:               "lan/browser/{{.iface}}/",
-	UrlParamsRequired: true,
+	Verb: HTTP_METHOD_GET,
+	Url:  "lan/browser/{{.iface}}/",
 }
 
 var InterfaceHostEP = &Endpoint{
-	Verb:              HTTP_METHOD_GET,
-	Url:               "lan/browser/{{.iface}}/{{.host_id}}",
-	UrlParamsRequired: true,
+	Verb: HTTP_METHOD_GET,
+	Url:  "lan/browser/{{.iface}}/{{.host_id}}",
 }
 
 var WakeOnLanEP = &Endpoint{
-	Verb:              HTTP_METHOD_POST,
-	Url:               "lan/wol/{{.iface}}/",
-	UrlParamsRequired: true,
-	BodyRequired:      true,
+	Verb:         HTTP_METHOD_POST,
+	Url:          "lan/wol/{{.iface}}/",
+	BodyRequired: true,
 }
 
 func (lh *LanHost) GetIPv4s() (ips []string) {

@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"net/url"
 	"sync"
 	"text/template"
 )
@@ -35,18 +36,18 @@ type APIResponse struct {
 }
 
 type Endpoint struct {
-	Verb              string
-	Url               string
-	NoAuth            bool
-	UrlParamsRequired bool
-	BodyRequired      bool
-	RespStruct        interface{}
+	Verb         string
+	Url          string
+	NoAuth       bool
+	BodyRequired bool
+	RespStruct   interface{}
 }
 
 type Query struct {
 	Client         *Client
 	Endpoint       *Endpoint
 	urlParams      map[string]string
+	queryParams    url.Values
 	body           []byte
 	rawAPIResponse *APIResponse
 }
@@ -86,7 +87,12 @@ func (q Query) As(params map[string]string) Query {
 	return q
 }
 
-func (q Query) With(body interface{}) Query {
+func (q Query) WithParams(params url.Values) Query {
+	q.queryParams = params
+	return q
+}
+
+func (q Query) WithBody(body interface{}) Query {
 	bodyJSON, err := json.Marshal(body)
 	checkErr(err)
 	q.body = bodyJSON
@@ -104,11 +110,11 @@ func (q Query) Do(endStruct interface{}) (err error) {
 	if !q.Endpoint.NoAuth && q.Client.SessionToken == "" {
 		q.Client.OpenSession(q.Client.App.AppID, q.Client.Freebox.AppToken)
 	}
-
 	url := q.makeUrl(PROTO_HTTPS, q.urlParams)
+	url.RawQuery = q.queryParams.Encode()
 
 	bodyBuffer := bytes.NewBuffer(q.body)
-	req, err := http.NewRequest(q.Endpoint.Verb, url, bodyBuffer)
+	req, err := http.NewRequest(q.Endpoint.Verb, url.String(), bodyBuffer)
 	checkErr(err)
 
 	if len(q.Client.SessionToken) > 0 {
@@ -140,15 +146,19 @@ func (q Query) Do(endStruct interface{}) (err error) {
 	return
 }
 
-func (q *Query) makeUrl(proto string, urlmap map[string]string) string {
-	url := q.Endpoint.Url
+func (q *Query) makeUrl(proto string, urlmap map[string]string) *url.URL {
+	ep := q.Endpoint.Url
 	buf := new(bytes.Buffer)
 	if urlmap != nil {
 		ptmpl, err := tmpl.Parse(q.Endpoint.Url)
 		checkErr(err)
 		err = ptmpl.Execute(buf, urlmap)
 		checkErr(err)
-		url = buf.String()
+		ep = buf.String()
 	}
-	return fmt.Sprintf("%s://%s:%d/api/v%d/%s", proto, q.Client.Freebox.Host, q.Client.Freebox.Port, q.Client.Version, url)
+	return &url.URL{
+		Scheme: proto,
+		Host:   fmt.Sprintf("%s:%d", q.Client.Freebox.Host, q.Client.Freebox.Port),
+		Path:   fmt.Sprintf("/api/v%d/%s", q.Client.Version, ep),
+	}
 }

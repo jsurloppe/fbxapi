@@ -81,14 +81,13 @@ var AuthorizeEP = &Endpoint{
 }
 
 var TrackAuthorizeEP = &Endpoint{
-	Verb:              HTTP_METHOD_GET,
-	Url:               "login/authorize/{{.track_id}}",
-	NoAuth:            true,
-	UrlParamsRequired: true,
+	Verb:   HTTP_METHOD_GET,
+	Url:    "login/authorize/{{.track_id}}",
+	NoAuth: true,
 }
 
 func (c *Client) Register(tokenReq TokenRequest) (respAuth *Authorization, err error) {
-	err = c.Query(AuthorizeEP).With(tokenReq).Do(respAuth)
+	err = c.Query(AuthorizeEP).WithBody(tokenReq).Do(respAuth)
 	checkErr(err)
 	return
 }
@@ -132,7 +131,7 @@ func (c *Client) Session(reqSess ReqSession) (respSess *RespSession, err error) 
 	defer panicAttack(&err)
 
 	respSess = new(RespSession)
-	err = c.Query(SessionEP).With(reqSess).Do(respSess)
+	err = c.Query(SessionEP).WithBody(reqSess).Do(respSess)
 	checkErr(err)
 
 	return
@@ -141,7 +140,7 @@ func (c *Client) Session(reqSess ReqSession) (respSess *RespSession, err error) 
 func (c *Client) OpenSession(appID, appToken string) (err error) {
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
-	// defer panicAttack(&err)
+	defer panicAttack(&err)
 
 	err = c.Logout()
 	checkErr(err)

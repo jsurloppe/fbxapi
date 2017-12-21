@@ -2,6 +2,7 @@ package fbxapi
 
 import (
 	"encoding/base64"
+	"net/url"
 	"strings"
 )
 
@@ -79,47 +80,58 @@ func encodePath(path string) string {
 	return base64.StdEncoding.EncodeToString([]byte(path))
 }
 
+func boolToIntStr(aBool bool) string {
+	if aBool {
+		return "1"
+	}
+	return "0"
+}
+
 var TasksEP = &Endpoint{
 	Verb: HTTP_METHOD_GET,
 	Url:  "fs/tasks/",
 }
 
-/*func (c *Client) Ls(path string, onlyFolder, countSubFolder, removeHidden bool) (respFileInfo []FileInfo, err error) {
+var LsEP = &Endpoint{
+	Verb: HTTP_METHOD_GET,
+	Url:  "fs/ls/{{.path}}",
+}
+
+var InfoEP = &Endpoint{
+	Verb: HTTP_METHOD_GET,
+	Url:  "fs/info/{{.path}}",
+}
+
+func (c *Client) Ls(path string, onlyFolder, countSubFolder, removeHidden bool) (respFileInfo []FileInfo, err error) {
 	defer panicAttack(&err)
 
-	strOnlyFolder := strconv.FormatBool(onlyFolder)
-	strCountSubFoder := strconv.FormatBool(countSubFolder)
-	strRemoveHidden := strconv.FormatBool(removeHidden)
+	queryParams := url.Values{}
+	queryParams.Set("onlyFolder", boolToIntStr(onlyFolder))
+	queryParams.Set("countSubFolder", boolToIntStr(countSubFolder))
+	queryParams.Set("removeHidden", boolToIntStr(removeHidden))
 
-	url := fmt.Sprintf("fs/ls/%s?onlyFolder=%s&countSubFolder=%s&removeHidden=%s",
-		encodePath(path), strOnlyFolder, strCountSubFoder, strRemoveHidden)
+	params := map[string]string{
+		"path": encodePath(path),
+	}
 
-	c.Query()
-	resp, err := c.httpRequest(HTTP_METHOD_GET, url, nil, true)
+	err = c.Query(LsEP).As(params).WithParams(queryParams).Do(&respFileInfo)
 	checkErr(err)
-
-	err = ResultFromResponse(resp, &respFileInfo)
-	checkErr(err)
-
 	return
 }
 
 func (c *Client) Info(path string) (respFileInfo *FileInfo, err error) {
 	defer panicAttack(&err)
 
-	url := fmt.Sprintf("fs/info/%s", encodePath(path))
+	params := map[string]string{
+		"path": encodePath(path),
+	}
 
-	resp, err := c.httpRequest(HTTP_METHOD_GET, url, nil, true)
+	err = c.Query(InfoEP).As(params).Do(&respFileInfo)
 	checkErr(err)
-
-	respFileInfo = new(FileInfo)
-	err = ResultFromResponse(resp, respFileInfo)
-	checkErr(err)
-
 	return
 }
 
-func (c *Client) Dl(path string) (resp *http.Response, err error) {
+/*func (c *Client) Dl(path string) (resp *http.Response, err error) {
 	defer panicAttack(&err)
 
 	url := fmt.Sprintf("dl/%s", encodePath(path))

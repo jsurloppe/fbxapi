@@ -61,8 +61,7 @@ func MdnsDiscover(fbChan chan<- *Freebox) {
 	go func() {
 		for service := range entriesCh {
 			fmt.Println(service)
-			freebox := new(Freebox)
-			freebox.fromServiceEntry(service)
+			freebox := NewFromServiceEntry(service)
 			fmt.Println("gorou")
 			fbChan <- freebox
 		}

@@ -1,7 +1,6 @@
 package fbxapi
 
 import (
-	"fmt"
 	"net"
 )
 
@@ -64,67 +63,37 @@ type LanHost struct {
 	L3Connectivities  []LanHostL3Connectivity `json:"l3connectivities"`
 }
 
+var LanConfigEP = &Endpoint{
+	Verb: HTTP_METHOD_GET,
+	Url:  "lan/config/",
+}
+
+var InterfacesEP = &Endpoint{
+	Verb: HTTP_METHOD_GET,
+	Url:  "lan/browser/interfaces/",
+}
+
+var InterfaceEP = &Endpoint{
+	Verb: HTTP_METHOD_GET,
+	Url:  "lan/browser/{{.iface}}/",
+}
+
+var InterfaceHostEP = &Endpoint{
+	Verb: HTTP_METHOD_GET,
+	Url:  "lan/browser/{{.iface}}/{{.host_id}}",
+}
+
+var WakeOnLanEP = &Endpoint{
+	Verb:         HTTP_METHOD_POST,
+	Url:          "lan/wol/{{.iface}}/",
+	BodyRequired: true,
+}
+
 func (lh *LanHost) GetIPv4s() (ips []string) {
 	for _, l3 := range lh.L3Connectivities {
 		if l3.Active {
 			ips = append(ips, l3.Addr)
 		}
 	}
-	return
-}
-
-func (c *Client) LanConfig(iface, hostID string, reqLC *LanConfig) (respLanConfig *LanConfig, err error) {
-	defer panicAttack(&err)
-
-	method, body, err := SelectRequestMethod(HTTP_METHOD_PUT, dataIsNil, reqLC)
-	checkErr(err)
-	resp, err := c.httpRequest(method, "lan/config/", body, true)
-	checkErr(err)
-	respLanConfig = new(LanConfig)
-	err = ResultFromResponse(resp, respLanConfig)
-	checkErr(err)
-	return
-}
-
-func (c *Client) Interfaces() (ifaceStats []InterfaceStat, err error) {
-	defer panicAttack(&err)
-
-	resp, err := c.httpRequest(HTTP_METHOD_GET, "lan/browser/interfaces/", nil, true)
-	checkErr(err)
-	err = ResultFromResponse(resp, ifaceStats)
-	checkErr(err)
-	return
-}
-
-func (c *Client) Interface(iface string) (lanHosts []LanHost, err error) {
-	defer panicAttack(&err)
-
-	url := fmt.Sprintf("lan/browser/%s/", iface)
-	resp, err := c.httpRequest(HTTP_METHOD_GET, url, nil, true)
-	checkErr(err)
-	err = ResultFromResponse(resp, &lanHosts)
-	checkErr(err)
-	return
-}
-
-func (c *Client) InterfaceHost(iface, hostID string, reqHost *ReqHost) (lanHost *LanHost, err error) {
-	defer panicAttack(&err)
-
-	method, body, err := SelectRequestMethod(HTTP_METHOD_PUT, dataIsNil, reqHost)
-	checkErr(err)
-	url := fmt.Sprintf("lan/browser/%s/%s/", iface, hostID)
-	resp, err := c.httpRequest(method, url, body, true)
-	checkErr(err)
-	lanHost = new(LanHost)
-	err = ResultFromResponse(resp, lanHost)
-	checkErr(err)
-	return
-}
-
-func (c *Client) WakeOnLan(iface string) (resp *Response, err error) {
-	defer panicAttack(&err)
-	url := fmt.Sprintf("lan/wol/%s/", iface)
-	resp, err = c.httpRequest(HTTP_METHOD_GET, url, nil, true)
-	checkErr(err)
 	return
 }

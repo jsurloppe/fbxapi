@@ -2,9 +2,7 @@ package fbxapi
 
 import (
 	"encoding/base64"
-	"fmt"
-	"net/http"
-	"strconv"
+	"net/url"
 	"strings"
 )
 
@@ -44,6 +42,36 @@ type FileInfo struct {
 	FileCount    int    `json:"filecount"`
 }
 
+type FileUpload struct {
+	ID         int    `json:"id"`
+	Size       int    `json:"size"`
+	Uploaded   int    `json:"uploaded"`
+	Status     string `json:"status"`
+	StartDate  int    `json:"start_date"`
+	LastUpdate int    `json:"last_update"`
+	UploadName string `json:"upload_name"`
+	Dirname    string `json:"dirname"`
+}
+
+type FileUploadStartAction struct {
+	RequestID int    `json:"request_id,omitempty"`
+	Action    string `json:"action"`
+	Size      int    `json:"size"`
+	Dirname   string `json:"dirname"`
+	Filename  string `json:"filename"`
+	Force     string `json:"force"`
+}
+
+type FileUploadFinalizeAction struct {
+	RequestID int    `json:"request_id,omitempty"`
+	Action    string `json:"action"`
+}
+
+type FileUploadCancelAction struct {
+	RequestID int    `json:"request_id,omitempty"`
+	Action    string `json:"action"`
+}
+
 func encodePath(path string) string {
 	if !strings.HasPrefix(path, "/") {
 		path = "/" + path
@@ -52,54 +80,58 @@ func encodePath(path string) string {
 	return base64.StdEncoding.EncodeToString([]byte(path))
 }
 
-func (c *Client) Tasks() (respFSTask *FSTask, err error) {
-	defer panicAttack(&err)
+func boolToIntStr(aBool bool) string {
+	if aBool {
+		return "1"
+	}
+	return "0"
+}
 
-	resp, err := c.httpRequest(HTTP_METHOD_GET, "fs/tasks/", nil, true)
-	checkErr(err)
+var TasksEP = &Endpoint{
+	Verb: HTTP_METHOD_GET,
+	Url:  "fs/tasks/",
+}
 
-	respFSTask = new(FSTask)
-	err = ResultFromResponse(resp, respFSTask)
-	checkErr(err)
+var LsEP = &Endpoint{
+	Verb: HTTP_METHOD_GET,
+	Url:  "fs/ls/{{.path}}",
+}
 
-	return
+var InfoEP = &Endpoint{
+	Verb: HTTP_METHOD_GET,
+	Url:  "fs/info/{{.path}}",
 }
 
 func (c *Client) Ls(path string, onlyFolder, countSubFolder, removeHidden bool) (respFileInfo []FileInfo, err error) {
 	defer panicAttack(&err)
 
-	strOnlyFolder := strconv.FormatBool(onlyFolder)
-	strCountSubFoder := strconv.FormatBool(countSubFolder)
-	strRemoveHidden := strconv.FormatBool(removeHidden)
+	queryParams := url.Values{}
+	queryParams.Set("onlyFolder", boolToIntStr(onlyFolder))
+	queryParams.Set("countSubFolder", boolToIntStr(countSubFolder))
+	queryParams.Set("removeHidden", boolToIntStr(removeHidden))
 
-	url := fmt.Sprintf("fs/ls/%s?onlyFolder=%s&countSubFolder=%s&removeHidden=%s",
-		encodePath(path), strOnlyFolder, strCountSubFoder, strRemoveHidden)
+	params := map[string]string{
+		"path": encodePath(path),
+	}
 
-	resp, err := c.httpRequest(HTTP_METHOD_GET, url, nil, true)
+	err = c.Query(LsEP).As(params).WithParams(queryParams).Do(&respFileInfo)
 	checkErr(err)
-
-	err = ResultFromResponse(resp, &respFileInfo)
-	checkErr(err)
-
 	return
 }
 
 func (c *Client) Info(path string) (respFileInfo *FileInfo, err error) {
 	defer panicAttack(&err)
 
-	url := fmt.Sprintf("fs/info/%s", encodePath(path))
+	params := map[string]string{
+		"path": encodePath(path),
+	}
 
-	resp, err := c.httpRequest(HTTP_METHOD_GET, url, nil, true)
+	err = c.Query(InfoEP).As(params).Do(&respFileInfo)
 	checkErr(err)
-
-	respFileInfo = new(FileInfo)
-	err = ResultFromResponse(resp, respFileInfo)
-	checkErr(err)
-
 	return
 }
 
-func (c *Client) Dl(path string) (resp *http.Response, err error) {
+/*func (c *Client) Dl(path string) (resp *http.Response, err error) {
 	defer panicAttack(&err)
 
 	url := fmt.Sprintf("dl/%s", encodePath(path))
@@ -108,4 +140,4 @@ func (c *Client) Dl(path string) (resp *http.Response, err error) {
 	checkErr(err)
 
 	return resp, nil
-}
+}*/

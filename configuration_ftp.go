@@ -1,20 +1,22 @@
 package fbxapi
 
 type FTPConfig struct {
-	Enabled             bool   `json:"enabled"`
-	AllowAnonymous      bool   `json:"allow_anonymous"`
-	AllowAnonymousWrite bool   `json:"allow_anonymous_write"`
-	Password            string `json:"password"`
+	Enabled             bool `json:"enabled"`
+	AllowAnonymous      bool `json:"allow_anonymous"`
+	AllowAnonymousWrite bool `json:"allow_anonymous_write"`
+	WeakPassword        bool `json:"weak_password"`
+	AllowRemoteAccess   bool `json:"allow_remote_access"`
+	PortCtrl            int  `json:"port_ctrl"`
+	PortData            int  `json:"port_data"`
 }
 
-func (c *Client) FTPConfig(ftpConf *FTPConfig) (respFTPConf *FTPConfig, err error) {
-	defer panicAttack(&err)
+var CurrentFTPConfigEP = &Endpoint{
+	Verb: HTTP_METHOD_GET,
+	Url:  "ftp/config/",
+}
 
-	method, body, err := SelectRequestMethod(HTTP_METHOD_PUT, dataIsNil, ftpConf)
-	checkErr(err)
-	resp, err := c.httpRequest(method, "ftp/config/", body, true)
-	checkErr(err)
-	respFTPConf = new(FTPConfig)
-	ResultFromResponse(resp, respFTPConf)
-	return
+var UpdateFTPConfigEP = &Endpoint{
+	Verb:         HTTP_METHOD_PUT,
+	Url:          "ftp/config/",
+	BodyRequired: true,
 }

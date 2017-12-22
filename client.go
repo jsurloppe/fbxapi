@@ -135,6 +135,7 @@ func (q Query) DoRequest() (resp *http.Response, err error) {
 func (q Query) Do(endStruct interface{}) (err error) {
 	defer panicAttack(&err)
 	resp, err := q.DoRequest()
+	checkErr(err)
 
 	defer resp.Body.Close()
 	bodyResp, err := ioutil.ReadAll(resp.Body)

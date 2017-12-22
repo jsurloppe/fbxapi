@@ -63,26 +63,36 @@ type LanHost struct {
 	L3Connectivities  []LanHostL3Connectivity `json:"l3connectivities"`
 }
 
+// LanConfigEP endpoint definition
+// Output: LanConfig
 var LanConfigEP = &Endpoint{
 	Verb: HTTP_METHOD_GET,
 	Url:  "lan/config/",
 }
 
+// InterfacesEP endpoint definition
+// Output: []InterfaceStat
 var InterfacesEP = &Endpoint{
 	Verb: HTTP_METHOD_GET,
 	Url:  "lan/browser/interfaces/",
 }
 
+// InterfaceEP endpoint definition
+// Output: []LanHost
 var InterfaceEP = &Endpoint{
 	Verb: HTTP_METHOD_GET,
 	Url:  "lan/browser/{{.iface}}/",
 }
 
+// InterfaceHostEP endpoint definition
+// Output: LanHost
 var InterfaceHostEP = &Endpoint{
 	Verb: HTTP_METHOD_GET,
 	Url:  "lan/browser/{{.iface}}/{{.host_id}}",
 }
 
+// WakeOnLanEP endpoint definition
+// Output: nil
 var WakeOnLanEP = &Endpoint{
 	Verb:         HTTP_METHOD_POST,
 	Url:          "lan/wol/{{.iface}}/",

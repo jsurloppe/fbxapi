@@ -2,6 +2,12 @@
 
 
 [[projects]]
+  name = "github.com/Sirupsen/logrus"
+  packages = ["."]
+  revision = "d682213848ed68c0a260ca37d6dd5ace8423f5ba"
+  version = "v1.0.4"
+
+[[projects]]
   branch = "master"
   name = "github.com/hashicorp/go.net"
   packages = ["internal/iana","ipv4","ipv6"]
@@ -16,12 +22,30 @@
 [[projects]]
   branch = "master"
   name = "github.com/miekg/dns"
-  packages = [".","internal/socket"]
-  revision = "9fc4eb252eedf0ef8adc05169ce35da5e31beaba"
+  packages = ["."]
+  revision = "90888765254c1fa54fa39e2eb383aa3436a2e8f8"
+
+[[projects]]
+  branch = "master"
+  name = "golang.org/x/crypto"
+  packages = ["ed25519","ed25519/internal/edwards25519","ssh/terminal"]
+  revision = "d585fd2cc9195196078f516b69daff6744ef5e84"
+
+[[projects]]
+  branch = "master"
+  name = "golang.org/x/net"
+  packages = ["bpf","internal/iana","internal/socket","ipv4","ipv6"]
+  revision = "d866cfc389cec985d6fda2859936a575a55a3ab6"
+
+[[projects]]
+  branch = "master"
+  name = "golang.org/x/sys"
+  packages = ["unix","windows"]
+  revision = "d818ba11af4465e00c1998bd3f8a55603b422290"
 
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "037539b9eec8113c7cb74051f9942fb375d946571f083990df41c2ffc56a8598"
+  inputs-digest = "0c75a446840d7721414fbde8e6b1d4683addb3a8de785163942f23bafce4251c"
   solver-name = "gps-cdcl"
   solver-version = 1

@@ -6,10 +6,6 @@ import (
 	"testing"
 )
 
-var testFb *Freebox
-var testApp *App
-var testClient *Client
-
 func TestMain(m *testing.M) {
 	host := flag.String("host", "mafreebox.freebox.fr", "Freebox host")
 	port := flag.Int("port", 443, "Freebox HTTPS port")

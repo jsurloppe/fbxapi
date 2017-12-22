@@ -9,6 +9,10 @@ import (
 	"github.com/Sirupsen/logrus"
 )
 
+var testFb *Freebox
+var testApp *App
+var testClient *Client
+
 func isIn(a string, b []string) bool {
 	for _, v := range b {
 		if a == v {

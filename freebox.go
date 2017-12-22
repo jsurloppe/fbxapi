@@ -15,6 +15,7 @@ type Freebox struct {
 }
 
 func NewFromServiceEntry(service *mdns.ServiceEntry) (fb *Freebox) {
+	fb = new(Freebox)
 	fb.DeviceName = strings.TrimSuffix(service.Name, "._fbx-api._tcp.local.")
 	fb.DeviceName = strings.Replace(fb.DeviceName, "\\", "", -1)
 	fb.Host = service.Host

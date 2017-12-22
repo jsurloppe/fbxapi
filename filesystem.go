@@ -2,6 +2,7 @@ package fbxapi
 
 import (
 	"encoding/base64"
+	"net/http"
 	"net/url"
 	"strings"
 )
@@ -102,6 +103,11 @@ var InfoEP = &Endpoint{
 	Url:  "fs/info/{{.path}}",
 }
 
+var DlEP = &Endpoint{
+	Verb: HTTP_METHOD_GET,
+	Url:  "fs/info/{{.path}}",
+}
+
 func (c *Client) Ls(path string, onlyFolder, countSubFolder, removeHidden bool) (respFileInfo []FileInfo, err error) {
 	defer panicAttack(&err)
 
@@ -131,13 +137,14 @@ func (c *Client) Info(path string) (respFileInfo *FileInfo, err error) {
 	return
 }
 
-/*func (c *Client) Dl(path string) (resp *http.Response, err error) {
+func (c *Client) Dl(path string) (resp *http.Response, err error) {
 	defer panicAttack(&err)
 
-	url := fmt.Sprintf("dl/%s", encodePath(path))
+	params := map[string]string{
+		"path": encodePath(path),
+	}
 
-	resp, err = c.newRequest(HTTP_METHOD_GET, url, nil)
+	resp, err = c.Query(DlEP).As(params).DoRequest()
 	checkErr(err)
-
-	return resp, nil
-}*/
+	return
+}

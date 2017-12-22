@@ -2,7 +2,6 @@ package fbxapi
 
 import (
 	"bytes"
-	"crypto/tls"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -59,7 +58,7 @@ func init() {
 }
 
 func NewClient(app *App, fb *Freebox) *Client {
-	tr := &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: true}}
+	tr := &http.Transport{TLSClientConfig: tlsConfig}
 	httpClient := &http.Client{Transport: tr}
 
 	return &Client{
@@ -104,7 +103,7 @@ func (q Query) Inspect(resp *APIResponse) Query {
 	return q
 }
 
-func (q Query) Do(endStruct interface{}) (err error) {
+func (q Query) DoRequest() (resp *http.Response, err error) {
 	defer panicAttack(&err)
 
 	if !q.Endpoint.NoAuth && q.Client.SessionToken == "" {
@@ -121,15 +120,21 @@ func (q Query) Do(endStruct interface{}) (err error) {
 		req.Header.Add(AUTHHEADER, q.Client.SessionToken)
 	}
 
-	tr := &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: true}}
+	tr := &http.Transport{TLSClientConfig: tlsConfig}
 	client := &http.Client{Transport: tr}
 
-	resp, err := client.Do(req)
+	resp, err = client.Do(req)
 	checkErr(err)
 
 	if resp.StatusCode >= 400 {
 		panic(errors.New(resp.Status))
 	}
+	return resp, err
+}
+
+func (q Query) Do(endStruct interface{}) (err error) {
+	defer panicAttack(&err)
+	resp, err := q.DoRequest()
 
 	defer resp.Body.Close()
 	bodyResp, err := ioutil.ReadAll(resp.Body)

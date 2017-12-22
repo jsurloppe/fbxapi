@@ -1,7 +1,6 @@
 package fbxapi
 
 import (
-	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -60,15 +59,12 @@ func MdnsDiscover(fbChan chan<- *Freebox) {
 
 	go func() {
 		for service := range entriesCh {
-			fmt.Println(service)
 			freebox := NewFromServiceEntry(service)
-			fmt.Println("gorou")
 			fbChan <- freebox
 		}
 	}()
 
 	mdns.Lookup(SERVICE, entriesCh)
-	fmt.Println("will close")
 	close(entriesCh)
 }
 
@@ -76,15 +72,16 @@ func HttpDiscover(host string, port int) (freebox *Freebox, err error) {
 	defer panicAttack(&err)
 	url := fmt.Sprintf("https://%s:%d/api_version", host, port)
 
-	tr := &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: true}}
+	tr := &http.Transport{TLSClientConfig: tlsConfig}
 	client := &http.Client{Transport: tr}
 
 	resp, err := client.Get(url)
 	checkErr(err)
 	body, err := ioutil.ReadAll(resp.Body)
 	checkErr(err)
+
 	defer resp.Body.Close()
-	drebug("[HttpDiscover] %s", body)
+
 	freebox = new(Freebox)
 	err = json.Unmarshal(body, &freebox)
 	checkErr(err)

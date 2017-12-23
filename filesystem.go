@@ -105,7 +105,7 @@ var InfoEP = &Endpoint{
 
 var DlEP = &Endpoint{
 	Verb: HTTP_METHOD_GET,
-	Url:  "fs/info/{{.path}}",
+	Url:  "dl/{{.path}}",
 }
 
 func (c *Client) Ls(path string, onlyFolder, countSubFolder, removeHidden bool) (respFileInfo []FileInfo, err error) {

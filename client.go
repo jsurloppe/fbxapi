@@ -126,10 +126,24 @@ func (q Query) DoRequest() (resp *http.Response, err error) {
 	resp, err = client.Do(req)
 	checkErr(err)
 
-	if resp.StatusCode >= 400 {
-		panic(errors.New(resp.Status))
-	}
+	err = checkHTTPError(resp)
+	checkErr(err)
+
 	return resp, err
+}
+
+func checkHTTPError(resp *http.Response) error {
+	if resp.StatusCode >= 400 {
+		return errors.New(resp.Status)
+	}
+	return nil
+}
+
+func checkAPIError(resp *APIResponse) error {
+	if !resp.Success {
+		return errors.New(resp.Msg)
+	}
+	return nil
 }
 
 func (q Query) Do(endStruct interface{}) (err error) {
@@ -142,6 +156,9 @@ func (q Query) Do(endStruct interface{}) (err error) {
 	checkErr(err)
 
 	err = json.Unmarshal(bodyResp, &q.rawAPIResponse)
+	checkErr(err)
+
+	err = checkAPIError(q.rawAPIResponse)
 	checkErr(err)
 
 	if endStruct != nil {

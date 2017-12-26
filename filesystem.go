@@ -2,9 +2,15 @@ package fbxapi
 
 import (
 	"encoding/base64"
+	"errors"
+	"io"
 	"net/http"
 	"net/url"
+	"os"
 	"strings"
+	"time"
+
+	"golang.org/x/net/websocket"
 )
 
 type FSTask struct {
@@ -55,22 +61,17 @@ type FileUpload struct {
 }
 
 type FileUploadStartAction struct {
-	RequestID int    `json:"request_id,omitempty"`
-	Action    string `json:"action"`
-	Size      int    `json:"size"`
-	Dirname   string `json:"dirname"`
-	Filename  string `json:"filename"`
-	Force     string `json:"force"`
+	WSRequest
+	Size     int    `json:"size"`
+	Dirname  string `json:"dirname"`
+	Filename string `json:"filename"`
+	Force    string `json:"force"`
 }
 
-type FileUploadFinalizeAction struct {
-	RequestID int    `json:"request_id,omitempty"`
-	Action    string `json:"action"`
-}
-
-type FileUploadCancelAction struct {
-	RequestID int    `json:"request_id,omitempty"`
-	Action    string `json:"action"`
+type FileUploadChunkResponse struct {
+	TotalLen  int  `json:"total_len"`
+	Complete  bool `json:"complete,omitempty"`
+	Cancelled bool `json:"cancelled,omitempty"`
 }
 
 func encodePath(path string) string {
@@ -106,6 +107,11 @@ var InfoEP = &Endpoint{
 var DlEP = &Endpoint{
 	Verb: HTTP_METHOD_GET,
 	Url:  "dl/{{.path}}",
+}
+
+var UlEP = &Endpoint{
+	Verb: HTTP_METHOD_GET,
+	Url:  "ws/upload",
 }
 
 func (c *Client) Ls(path string, onlyFolder, countSubFolder, removeHidden bool) (respFileInfo []FileInfo, err error) {
@@ -146,5 +152,81 @@ func (c *Client) Dl(path string) (resp *http.Response, err error) {
 
 	resp, err = c.Query(DlEP).As(params).DoRequest()
 	checkErr(err)
+	return
+}
+
+func (c *Client) Upload(path, destDir string) (err error) {
+	defer panicAttack(&err)
+
+	conn, err := c.Query(UlEP).WS()
+	checkErr(err)
+	defer conn.Close()
+
+	f, err := os.Open(path)
+	checkErr(err)
+	defer f.Close()
+
+	fi, err := f.Stat()
+	checkErr(err)
+
+	reqID := int(time.Now().Unix())
+
+	reqUploadStart := &FileUploadStartAction{
+		WSRequest: WSRequest{
+			Action:    "upload_start",
+			RequestID: reqID,
+		},
+		Size:     int(fi.Size()),
+		Dirname:  encodePath(destDir),
+		Filename: fi.Name(),
+		Force:    "overwrite",
+	}
+
+	err = websocket.JSON.Send(conn, reqUploadStart)
+	checkErr(err)
+
+	resp := new(WSResponse)
+
+	err = websocket.JSON.Receive(conn, &resp)
+	checkErr(err)
+
+	if !resp.Success {
+		return errors.New(resp.Msg)
+	}
+
+	buf := make([]byte, 512000)
+	for {
+		n, err := f.Read(buf)
+		if err == io.EOF {
+			break
+		}
+		checkErr(err)
+
+		err = websocket.Message.Send(conn, buf[:n])
+		checkErr(err)
+
+		err = websocket.JSON.Receive(conn, &resp)
+		checkErr(err)
+
+		if !resp.Success {
+			return errors.New(resp.Msg)
+		}
+	}
+
+	reqUploadFinalize := &WSRequest{
+		Action:    "upload_finalize",
+		RequestID: reqID,
+	}
+
+	err = websocket.JSON.Send(conn, reqUploadFinalize)
+	checkErr(err)
+
+	err = websocket.JSON.Receive(conn, &resp)
+	checkErr(err)
+
+	if !resp.Success {
+		return errors.New(resp.Msg)
+	}
+
 	return
 }

@@ -8,8 +8,11 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"os"
 	"sync"
 	"text/template"
+
+	"golang.org/x/net/websocket"
 )
 
 type App struct {
@@ -130,6 +133,29 @@ func (q Query) DoRequest() (resp *http.Response, err error) {
 	checkErr(err)
 
 	return resp, err
+}
+
+func (q Query) WS() (conn *websocket.Conn, err error) {
+	defer panicAttack(&err)
+
+	if !q.Endpoint.NoAuth && q.Client.SessionToken == "" {
+		q.Client.OpenSession(q.Client.App.AppID, q.Client.Freebox.AppToken)
+	}
+	url := q.makeUrl(PROTO_WSS, q.urlParams)
+	url.RawQuery = q.queryParams.Encode()
+
+	hostname, err := os.Hostname()
+	checkErr(err)
+
+	config, err := websocket.NewConfig(url.String(), "http://"+hostname)
+	config.Header = http.Header{}
+	config.Header.Set(AUTHHEADER, q.Client.SessionToken)
+	config.TlsConfig = tlsConfig
+
+	conn, err = websocket.DialConfig(config)
+	checkErr(err)
+
+	return
 }
 
 func checkHTTPError(resp *http.Response) error {

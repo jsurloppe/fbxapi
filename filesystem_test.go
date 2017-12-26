@@ -1,6 +1,10 @@
 package fbxapi
 
 import (
+	"crypto/sha1"
+	"io"
+	"io/ioutil"
+	"os"
 	"testing"
 )
 
@@ -29,4 +33,33 @@ func TestInfo(t *testing.T) {
 		"path": "Lw==",
 	}
 	EndpointTester(t, InfoEP, &FileInfo{}, params, nil)
+}
+
+func TestUpload(t *testing.T) {
+	testClient.Upload("fixtures/lipsum.txt", "/Disque dur/")
+}
+
+func TestDownload(t *testing.T) {
+	resp, err := testClient.Dl("/Disque dur/lipsum.txt")
+	failOnError(t, err)
+
+	defer resp.Body.Close()
+	bytes, err := ioutil.ReadAll(resp.Body)
+	failOnError(t, err)
+
+	f, err := os.Open("fixtures/lipsum.txt")
+	failOnError(t, err)
+
+	defer f.Close()
+
+	h := sha1.New()
+	if _, err := io.Copy(h, f); err != nil {
+		failOnError(t, err)
+	}
+
+	fuck := sha1.Sum(bytes)
+
+	if string(h.Sum(nil)) != string(fuck[:]) {
+		t.Fail()
+	}
 }

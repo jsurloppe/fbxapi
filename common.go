@@ -14,6 +14,7 @@ const HTTP_METHOD_DELETE = "DELETE"
 const PROTO_HTTP = "http"
 const PROTO_HTTPS = "https"
 const PROTO_WS = "ws"
+const PROTO_WSS = "wss"
 
 type WSRequest struct {
 	RequestID int    `json:"request_id,omitempty"`

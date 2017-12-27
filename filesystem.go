@@ -1,7 +1,9 @@
 package fbxapi
 
 import (
+	"context"
 	"encoding/base64"
+	"encoding/json"
 	"errors"
 	"io"
 	"net/http"
@@ -68,10 +70,15 @@ type FileUploadStartAction struct {
 	Force    string `json:"force"`
 }
 
-type FileUploadChunkResponse struct {
+type FileUploadChunkResult struct {
 	TotalLen  int  `json:"total_len"`
 	Complete  bool `json:"complete,omitempty"`
 	Cancelled bool `json:"cancelled,omitempty"`
+}
+
+type FileUploadChunkResponse struct {
+	WSResponse
+	Result FileUploadChunkResult `json:"result,omitempty"`
 }
 
 func encodePath(path string) string {
@@ -155,6 +162,82 @@ func (c *Client) Dl(path string) (resp *http.Response, err error) {
 	return
 }
 
+func dispatchRecvError(ctx context.Context, entryCh <-chan *WSResponse, errorCh chan<- bool) {
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case resp := <-entryCh:
+			if !resp.Success {
+				errorCh <- true
+				return
+			}
+		}
+	}
+}
+
+func uploadMsgReceiver(ctx context.Context, conn *websocket.Conn, dispatcher map[string]chan *WSResponse) {
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		default:
+			var message []byte
+			if err := websocket.Message.Receive(conn, &message); err == nil {
+				resp := new(WSResponse)
+				err = json.Unmarshal(message, &resp)
+				checkErr(err)
+
+				if ch, ok := dispatcher[resp.Action]; ok {
+					ch <- resp
+				}
+			}
+		}
+	}
+}
+
+func sendFile(ctx context.Context, cancel context.CancelFunc, dataRecvCh <-chan *WSResponse, conn *websocket.Conn, path string, reqID int) {
+	f, err := os.Open(path)
+	checkErr(err)
+
+	defer f.Close()
+
+	errorCh := make(chan bool, 1)
+	defer close(errorCh)
+
+	go dispatchRecvError(ctx, dataRecvCh, errorCh)
+
+	buf := make([]byte, 512000)
+
+send_loop:
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-errorCh:
+			cancel()
+			return
+		default:
+			n, err := f.Read(buf)
+			if err == io.EOF {
+				break send_loop
+			}
+			checkErr(err)
+
+			err = websocket.Message.Send(conn, buf[:n])
+			checkErr(err)
+		}
+	}
+
+	reqUploadFinalize := &WSRequest{
+		Action:    "upload_finalize",
+		RequestID: reqID,
+	}
+
+	err = websocket.JSON.Send(conn, reqUploadFinalize)
+	checkErr(err)
+}
+
 func (c *Client) Upload(path, destDir string) (err error) {
 	defer panicAttack(&err)
 
@@ -162,11 +245,7 @@ func (c *Client) Upload(path, destDir string) (err error) {
 	checkErr(err)
 	defer conn.Close()
 
-	f, err := os.Open(path)
-	checkErr(err)
-	defer f.Close()
-
-	fi, err := f.Stat()
+	fi, err := os.Stat(path)
 	checkErr(err)
 
 	reqID := int(time.Now().Unix())
@@ -182,50 +261,32 @@ func (c *Client) Upload(path, destDir string) (err error) {
 		Force:    "overwrite",
 	}
 
+	dispatcher := map[string]chan *WSResponse{
+		"upload_start":    make(chan *WSResponse),
+		"upload_data":     make(chan *WSResponse),
+		"upload_finalize": make(chan *WSResponse),
+	}
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	go uploadMsgReceiver(ctx, conn, dispatcher)
+
 	err = websocket.JSON.Send(conn, reqUploadStart)
 	checkErr(err)
 
-	resp := new(WSResponse)
-
-	err = websocket.JSON.Receive(conn, &resp)
-	checkErr(err)
-
+	resp := <-dispatcher["upload_start"]
 	if !resp.Success {
 		return errors.New(resp.Msg)
 	}
 
-	buf := make([]byte, 512000)
-	for {
-		n, err := f.Read(buf)
-		if err == io.EOF {
-			break
-		}
-		checkErr(err)
+	go sendFile(ctx, cancel, dispatcher["upload_data"], conn, path, reqID)
 
-		err = websocket.Message.Send(conn, buf[:n])
-		checkErr(err)
+	select {
+	case <-ctx.Done():
+		checkErr(ctx.Err())
+	case <-dispatcher["upload_finalize"]:
 
-		err = websocket.JSON.Receive(conn, &resp)
-		checkErr(err)
-
-		if !resp.Success {
-			return errors.New(resp.Msg)
-		}
-	}
-
-	reqUploadFinalize := &WSRequest{
-		Action:    "upload_finalize",
-		RequestID: reqID,
-	}
-
-	err = websocket.JSON.Send(conn, reqUploadFinalize)
-	checkErr(err)
-
-	err = websocket.JSON.Receive(conn, &resp)
-	checkErr(err)
-
-	if !resp.Success {
-		return errors.New(resp.Msg)
 	}
 
 	return

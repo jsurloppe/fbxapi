@@ -36,7 +36,8 @@ func TestInfo(t *testing.T) {
 }
 
 func TestUpload(t *testing.T) {
-	testClient.Upload("fixtures/lipsum.txt", "/Disque dur/")
+	err := testClient.Upload("fixtures/lipsum.txt", "/Disque dur/")
+	failOnError(t, err)
 }
 
 func TestDownload(t *testing.T) {

@@ -1,6 +1,7 @@
 package fbxapi
 
 import (
+	"fmt"
 	"testing"
 	"time"
 )
@@ -15,7 +16,8 @@ func TestMdnsDiscover(t *testing.T) {
 	fbChan := make(chan *Freebox)
 	MdnsDiscover(fbChan)
 	select {
-	case <-fbChan:
+	case fb := <-fbChan:
+		fmt.Printf("%#v\n", fb)
 	case <-time.After(time.Second * 1):
 		t.Fail()
 	}

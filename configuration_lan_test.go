@@ -26,7 +26,8 @@ func TestInterfaceHost(t *testing.T) {
 	params := map[string]string{
 		"iface": "pub",
 	}
-	testClient.Query(InterfaceEP).As(params).Do(&data)
+	err := testClient.Query(InterfaceEP).As(params).Do(&data)
+	failOnError(t, err)
 
 	params = map[string]string{
 		"iface":   "pub",

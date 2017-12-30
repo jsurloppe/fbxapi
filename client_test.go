@@ -15,8 +15,8 @@ func TestMain(m *testing.M) {
 	flag.Parse()
 
 	testApp = &App{
-		AppID:      "com.github.jsurloppe.fbxcli",
-		AppVersion: "0",
+		AppID:      "com.github.jsurloppe.fbxapi",
+		AppVersion: "test",
 	}
 
 	testFb = &Freebox{

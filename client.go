@@ -139,7 +139,8 @@ func (q Query) WS() (conn *websocket.Conn, err error) {
 	defer panicAttack(&err)
 
 	if !q.Endpoint.NoAuth && q.Client.SessionToken == "" {
-		q.Client.OpenSession(q.Client.App.AppID, q.Client.Freebox.AppToken)
+		err = q.Client.OpenSession(q.Client.App.AppID, q.Client.Freebox.AppToken)
+		checkErr(err)
 	}
 	url := q.makeUrl(PROTO_WSS, q.urlParams)
 	url.RawQuery = q.queryParams.Encode()
@@ -159,7 +160,7 @@ func (q Query) WS() (conn *websocket.Conn, err error) {
 }
 
 func checkHTTPError(resp *http.Response) error {
-	if resp.StatusCode >= 400 {
+	if resp.StatusCode >= 500 {
 		return errors.New(resp.Status)
 	}
 	return nil

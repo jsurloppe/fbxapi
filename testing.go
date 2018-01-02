@@ -12,6 +12,7 @@ import (
 var testFb *Freebox
 var testApp *App
 var testClient *Client
+var doTestRegistration bool
 
 func isIn(a string, b []string) bool {
 	for _, v := range b {

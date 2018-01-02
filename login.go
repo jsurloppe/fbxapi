@@ -87,6 +87,7 @@ var TrackAuthorizeEP = &Endpoint{
 }
 
 func (c *Client) Register(tokenReq *TokenRequest) (respAuth *Authorization, err error) {
+	respAuth = new(Authorization)
 	err = c.Query(AuthorizeEP).WithBody(tokenReq).Do(respAuth)
 	checkErr(err)
 	return

@@ -5,6 +5,7 @@ import (
 )
 
 const AUTHHEADER = "X-Fbx-App-Auth"
+const CTHEADER = "Content-Type"
 
 const HTTP_METHOD_GET = "GET"
 const HTTP_METHOD_POST = "POST"

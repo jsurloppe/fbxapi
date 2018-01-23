@@ -81,7 +81,7 @@ type FileUploadChunkResponse struct {
 	Result FileUploadChunkResult `json:"result,omitempty"`
 }
 
-func encodePath(path string) string {
+func EncodePath(path string) string {
 	if !strings.HasPrefix(path, "/") {
 		path = "/" + path
 	}
@@ -130,7 +130,7 @@ func (c *Client) Ls(path string, onlyFolder, countSubFolder, removeHidden bool) 
 	queryParams.Set("removeHidden", boolToIntStr(removeHidden))
 
 	params := map[string]string{
-		"path": encodePath(path),
+		"path": EncodePath(path),
 	}
 
 	err = c.Query(LsEP).As(params).WithParams(queryParams).Do(&respFileInfo)
@@ -142,7 +142,7 @@ func (c *Client) Info(path string) (respFileInfo *FileInfo, err error) {
 	defer panicAttack(&err)
 
 	params := map[string]string{
-		"path": encodePath(path),
+		"path": EncodePath(path),
 	}
 
 	err = c.Query(InfoEP).As(params).Do(&respFileInfo)
@@ -154,7 +154,7 @@ func (c *Client) Dl(path string) (resp *http.Response, err error) {
 	defer panicAttack(&err)
 
 	params := map[string]string{
-		"path": encodePath(path),
+		"path": EncodePath(path),
 	}
 
 	resp, err = c.Query(DlEP).As(params).DoRequest()
@@ -256,7 +256,7 @@ func (c *Client) Upload(path, destDir string) (err error) {
 			RequestID: reqID,
 		},
 		Size:     int(fi.Size()),
-		Dirname:  encodePath(destDir),
+		Dirname:  EncodePath(destDir),
 		Filename: fi.Name(),
 		Force:    "overwrite",
 	}

@@ -40,7 +40,7 @@ func TestUpload(t *testing.T) {
 	failOnError(t, err)
 }
 
-func TestDownload(t *testing.T) {
+func TestFSDownload(t *testing.T) {
 	resp, err := testClient.Dl("/Disque dur/lipsum.txt")
 	failOnError(t, err)
 

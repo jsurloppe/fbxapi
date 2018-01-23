@@ -99,9 +99,11 @@ var WakeOnLanEP = &Endpoint{
 	BodyRequired: true,
 }
 
+const IPV4 = "ipv4"
+
 func (lh *LanHost) GetIPv4s() (ips []string) {
 	for _, l3 := range lh.L3Connectivities {
-		if l3.Active {
+		if l3.Active && l3.Af == IPV4 {
 			ips = append(ips, l3.Addr)
 		}
 	}

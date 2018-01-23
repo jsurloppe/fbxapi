@@ -9,6 +9,8 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"reflect"
+	"strconv"
 	"sync"
 	"text/template"
 
@@ -52,6 +54,7 @@ type Query struct {
 	queryParams    url.Values
 	body           []byte
 	rawAPIResponse *APIResponse
+	contentType    string
 }
 
 var tmpl *template.Template
@@ -101,6 +104,20 @@ func (q Query) WithBody(body interface{}) Query {
 	return q
 }
 
+func (q Query) WithFormBody(body interface{}) Query {
+	bodyJSON, err := json.Marshal(body)
+	checkErr(err)
+
+	m := make(map[string]interface{})
+	err = json.Unmarshal(bodyJSON, &m)
+	checkErr(err)
+
+	values := stringify(m)
+	q.body = []byte(values.Encode())
+	q.contentType = "application/x-www-form-urlencoded"
+	return q
+}
+
 func (q Query) Inspect(resp *APIResponse) Query {
 	q.rawAPIResponse = resp
 	return q
@@ -121,6 +138,10 @@ func (q Query) DoRequest() (resp *http.Response, err error) {
 
 	if len(q.Client.SessionToken) > 0 {
 		req.Header.Add(AUTHHEADER, q.Client.SessionToken)
+	}
+
+	if q.contentType != "" {
+		req.Header.Add(CTHEADER, q.contentType)
 	}
 
 	tr := &http.Transport{TLSClientConfig: tlsConfig}
@@ -211,4 +232,30 @@ func (q *Query) makeUrl(proto string, urlmap map[string]string) *url.URL {
 		Host:   fmt.Sprintf("%s:%d", q.Client.Freebox.Host, q.Client.Freebox.Port),
 		Path:   fmt.Sprintf("/api/v%d/%s", q.Client.Version, ep),
 	}
+}
+
+func stringify(in map[string]interface{}) (values url.Values) {
+	values = url.Values{}
+	for k, v := range in {
+		rv := reflect.ValueOf(v)
+		var vs string
+		switch rv.Interface().(type) {
+		case int, int8, int16, int32, int64:
+			vs = strconv.FormatInt(rv.Int(), 10)
+		case uint, uint8, uint16, uint32, uint64:
+			vs = strconv.FormatUint(rv.Uint(), 10)
+		case float32:
+			vs = strconv.FormatFloat(rv.Float(), 'f', 4, 32)
+		case float64:
+			vs = strconv.FormatFloat(rv.Float(), 'f', 4, 64)
+		case []byte:
+			vs = string(rv.Bytes())
+		case string:
+			vs = rv.String()
+		case bool:
+			vs = boolToIntStr(rv.Bool())
+		}
+		values.Add(k, vs)
+	}
+	return
 }

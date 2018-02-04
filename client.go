@@ -70,7 +70,7 @@ func NewClient(app *App, fb *Freebox) *Client {
 	return &Client{
 		Freebox: fb,
 		http:    httpClient,
-		Version: 4,
+		Version: 5,
 		App:     app,
 	}
 }

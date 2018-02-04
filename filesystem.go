@@ -81,6 +81,14 @@ type FileUploadChunkResponse struct {
 	Result FileUploadChunkResult `json:"result,omitempty"`
 }
 
+type ShareLink struct {
+	Token   string `json:"token,omitempty"`
+	Path    string `json:"path,omitempty"`
+	Name    string `json:"name,omitempty"`
+	Expire  int    `json:"expire"`
+	FullURL string `json:"fullurl,omitempty"`
+}
+
 func EncodePath(path string) string {
 	if !strings.HasPrefix(path, "/") {
 		path = "/" + path
@@ -119,6 +127,11 @@ var DlEP = &Endpoint{
 var UlEP = &Endpoint{
 	Verb: HTTP_METHOD_GET,
 	Url:  "ws/upload",
+}
+
+var ShareEP = &Endpoint{
+	Verb: HTTP_METHOD_POST,
+	Url:  "share_link/",
 }
 
 func (c *Client) Ls(path string, onlyFolder, countSubFolder, removeHidden bool) (respFileInfo []FileInfo, err error) {

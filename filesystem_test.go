@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"os"
 	"testing"
+	"time"
 )
 
 func TestTasks(t *testing.T) {
@@ -63,4 +64,13 @@ func TestFSDownload(t *testing.T) {
 	if string(h.Sum(nil)) != string(fuck[:]) {
 		t.Fail()
 	}
+}
+
+func TestShare(t *testing.T) {
+	var data ShareLink
+	req := &ShareLink{
+		Path:   EncodePath("/Disque dur/lipsum.txt"),
+		Expire: int(time.Now().Add(time.Minute).Unix()),
+	}
+	EndpointTester(t, ShareEP, &data, nil, req)
 }

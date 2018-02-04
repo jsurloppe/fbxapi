@@ -28,7 +28,7 @@ type DownloadReq struct {
 	DownloadUrl     string `json:"download_url,omitempty"`
 	DownloadUrlList string `json:"download_url_list,omitempty"`
 	DownloadDir     string `json:"download_dir"`
-	Recursive       bool   `json:"recursive"`
+	Recursive       bool   `json:"recursive,omitempty"`
 	Username        string `json:"username,omitempty"`
 	Password        string `json:"password,omitempty"`
 	ArchivePassword string `json:"archive_password,omitempty"`

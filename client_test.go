@@ -19,8 +19,10 @@ func TestMain(m *testing.M) {
 	flag.Parse()
 
 	testApp = &App{
-		AppID:      "com.github.jsurloppe.fbxapi",
-		AppVersion: "test",
+		ID:      "com.github.jsurloppe.fbxapi",
+		Name:    "FbxAPI",
+		Version: "test",
+		Token:   *token,
 	}
 
 	testFb = &Freebox{
@@ -32,22 +34,14 @@ func TestMain(m *testing.M) {
 		},
 	}
 
-	testClient = NewClient(testApp, testFb)
+	var err error
+	testClient, err = testFb.OpenSession(testApp)
+	checkErr(err)
 
 	code := 0
 
 	if doTestRegistration {
-		hostname, err := os.Hostname()
-		checkErr(err)
-
-		tokenReq := &TokenRequest{
-			AppId:      testClient.App.AppID,
-			AppVersion: testClient.App.AppVersion,
-			AppName:    "fbxapi",
-			DeviceName: hostname,
-		}
-
-		auth, err := testClient.Register(tokenReq)
+		auth, err := testFb.Register(testApp)
 		checkErr(err)
 
 		fmt.Printf("Touch the right arrow on the freebox display")

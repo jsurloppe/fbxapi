@@ -68,22 +68,20 @@ type RespLogin struct {
 }
 
 type RespSession struct {
-	SessionToken string          `json:"session_token"`
-	Challenge    string          `json:"challenge"`
-	Permissions  map[string]bool `json:"permissions"`
+	Token       string          `json:"session_token"`
+	Challenge   string          `json:"challenge"`
+	Permissions map[string]bool `json:"permissions"`
 }
 
 var AuthorizeEP = &Endpoint{
 	Verb:         HTTP_METHOD_POST,
 	Url:          "login/authorize",
-	NoAuth:       true,
 	BodyRequired: true,
 }
 
 var TrackAuthorizeEP = &Endpoint{
-	Verb:   HTTP_METHOD_GET,
-	Url:    "login/authorize/{{.track_id}}",
-	NoAuth: true,
+	Verb: HTTP_METHOD_GET,
+	Url:  "login/authorize/{{.track_id}}",
 }
 
 func (c *Client) Register(tokenReq *TokenRequest) (respAuth *Authorization, err error) {
@@ -107,9 +105,8 @@ func (c *Client) Register(tokenReq *TokenRequest) (respAuth *Authorization, err 
 }*/
 
 var LoginEP = &Endpoint{
-	Verb:   HTTP_METHOD_GET,
-	Url:    "login/",
-	NoAuth: true,
+	Verb: HTTP_METHOD_GET,
+	Url:  "login/",
 }
 
 func (c *Client) Login() (respLogin *RespLogin, err error) {
@@ -123,9 +120,8 @@ func (c *Client) Login() (respLogin *RespLogin, err error) {
 }
 
 var SessionEP = &Endpoint{
-	Verb:   HTTP_METHOD_POST,
-	Url:    "login/session/",
-	NoAuth: true,
+	Verb: HTTP_METHOD_POST,
+	Url:  "login/session/",
 }
 
 func (c *Client) Session(reqSess ReqSession) (respSess *RespSession, err error) {
@@ -138,36 +134,18 @@ func (c *Client) Session(reqSess ReqSession) (respSess *RespSession, err error) 
 	return
 }
 
-func (c *Client) OpenSession(appID, appToken string) (err error) {
-	c.mutex.Lock()
-	defer c.mutex.Unlock()
-	defer panicAttack(&err)
-
-	err = c.Logout()
-	checkErr(err)
-	respLogin, err := c.Login()
-	checkErr(err)
-	password := ComputePassword(appToken, respLogin.Challenge)
-	reqSession := ReqSession{AppId: appID, Password: password}
-	respSession, err := c.Session(reqSession)
-	checkErr(err)
-	c.SessionToken = respSession.SessionToken
-	return
-}
-
 var LogoutEP = &Endpoint{
-	Verb:   HTTP_METHOD_POST,
-	Url:    "login/logout/",
-	NoAuth: true,
+	Verb: HTTP_METHOD_POST,
+	Url:  "login/logout/",
 }
 
 func (c *Client) Logout() (err error) {
 	defer panicAttack(&err)
 
-	if len(c.SessionToken) > 0 {
+	if len(c.session.Token) > 0 {
 		err = c.Query(LogoutEP).Do(nil)
 		checkErr(err)
-		c.SessionToken = ""
+		c.session.Token = ""
 	}
 
 	return err

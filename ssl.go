@@ -45,6 +45,7 @@ func init() {
 	caCertPool.AppendCertsFromPEM([]byte(FreeboxRootCA))
 
 	tlsConfig = &tls.Config{
-		RootCAs: caCertPool,
+		RootCAs:            caCertPool,
+		InsecureSkipVerify: true,
 	}
 }

@@ -10,6 +10,6 @@ func TestSystem(t *testing.T) {
 
 func TestReboot(t *testing.T) {
 	t.SkipNow()
-	err := NewClient(testApp, testFb).Query(RebootEP).Do(nil)
+	err := testClient.Query(RebootEP).Do(nil)
 	failOnError(t, err)
 }

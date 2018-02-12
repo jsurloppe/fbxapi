@@ -81,7 +81,6 @@ func checkOrphans(aStruct interface{}, result json.RawMessage) (bool, []string, 
 
 	if len(newKeys) > 0 {
 		logrus.Warnf("%s has new fields: %v", tehStruct.Name(), newKeys)
-		// spew.Dump(data)
 	}
 
 	if len(expiredKeys) > 0 {

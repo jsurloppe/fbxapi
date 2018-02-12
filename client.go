@@ -18,17 +18,22 @@ import (
 )
 
 type App struct {
-	AppID      string
-	AppVersion string
+	ID      string
+	Name    string
+	Version string
+	Token   string
 }
 
 type Client struct {
-	http         *http.Client
-	mutex        sync.Mutex
-	Freebox      *Freebox
-	Version      int
-	SessionToken string
-	App          *App
+	http    *http.Client
+	mutex   sync.Mutex
+	session *Session
+}
+
+type Session struct {
+	*APIVersion
+	*RespSession
+	Version int
 }
 
 type APIResponse struct {
@@ -42,7 +47,6 @@ type APIResponse struct {
 type Endpoint struct {
 	Verb         string
 	Url          string
-	NoAuth       bool
 	BodyRequired bool
 	RespStruct   interface{}
 }
@@ -63,18 +67,6 @@ func init() {
 	tmpl = template.New("url")
 }
 
-func NewClient(app *App, fb *Freebox) *Client {
-	tr := &http.Transport{TLSClientConfig: tlsConfig}
-	httpClient := &http.Client{Transport: tr}
-
-	return &Client{
-		Freebox: fb,
-		http:    httpClient,
-		Version: 5,
-		App:     app,
-	}
-}
-
 func (c *Client) Query(ep *Endpoint) Query {
 	return Query{
 		Client:   c,
@@ -82,8 +74,8 @@ func (c *Client) Query(ep *Endpoint) Query {
 	}
 }
 
-func (c *Client) WithSession(token string) *Client {
-	c.SessionToken = token
+func (c *Client) WithSession(session *Session) *Client {
+	c.session = session
 	return c
 }
 
@@ -126,9 +118,6 @@ func (q Query) Inspect(resp *APIResponse) Query {
 func (q Query) DoRequest() (resp *http.Response, err error) {
 	defer panicAttack(&err)
 
-	if !q.Endpoint.NoAuth && q.Client.SessionToken == "" {
-		q.Client.OpenSession(q.Client.App.AppID, q.Client.Freebox.AppToken)
-	}
 	url := q.makeUrl(PROTO_HTTPS, q.urlParams)
 	url.RawQuery = q.queryParams.Encode()
 
@@ -136,18 +125,15 @@ func (q Query) DoRequest() (resp *http.Response, err error) {
 	req, err := http.NewRequest(q.Endpoint.Verb, url.String(), bodyBuffer)
 	checkErr(err)
 
-	if len(q.Client.SessionToken) > 0 {
-		req.Header.Add(AUTHHEADER, q.Client.SessionToken)
+	if len(q.Client.session.Token) > 0 {
+		req.Header.Add(AUTHHEADER, q.Client.session.Token)
 	}
 
 	if q.contentType != "" {
 		req.Header.Add(CTHEADER, q.contentType)
 	}
 
-	tr := &http.Transport{TLSClientConfig: tlsConfig}
-	client := &http.Client{Transport: tr}
-
-	resp, err = client.Do(req)
+	resp, err = q.Client.http.Do(req)
 	checkErr(err)
 
 	err = checkHTTPError(resp)
@@ -159,10 +145,6 @@ func (q Query) DoRequest() (resp *http.Response, err error) {
 func (q Query) WS() (conn *websocket.Conn, err error) {
 	defer panicAttack(&err)
 
-	if !q.Endpoint.NoAuth && q.Client.SessionToken == "" {
-		err = q.Client.OpenSession(q.Client.App.AppID, q.Client.Freebox.AppToken)
-		checkErr(err)
-	}
 	url := q.makeUrl(PROTO_WSS, q.urlParams)
 	url.RawQuery = q.queryParams.Encode()
 
@@ -171,7 +153,7 @@ func (q Query) WS() (conn *websocket.Conn, err error) {
 
 	config, err := websocket.NewConfig(url.String(), "http://"+hostname)
 	config.Header = http.Header{}
-	config.Header.Set(AUTHHEADER, q.Client.SessionToken)
+	config.Header.Set(AUTHHEADER, q.Client.session.Token)
 	config.TlsConfig = tlsConfig
 
 	conn, err = websocket.DialConfig(config)
@@ -229,8 +211,8 @@ func (q *Query) makeUrl(proto string, urlmap map[string]string) *url.URL {
 	}
 	return &url.URL{
 		Scheme: proto,
-		Host:   fmt.Sprintf("%s:%d", q.Client.Freebox.Host, q.Client.Freebox.Port),
-		Path:   fmt.Sprintf("/api/v%d/%s", q.Client.Version, ep),
+		Host:   fmt.Sprintf("%s:%d", q.Client.session.RemoteAPIDomain, q.Client.session.RemoteHTTPSPort),
+		Path:   fmt.Sprintf("%sv%d/%s", q.Client.session.APIBaseURL, q.Client.session.Version, ep),
 	}
 }
 

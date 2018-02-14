@@ -49,6 +49,7 @@ type FileInfo struct {
 	Hidden       bool   `json:"hidden"`
 	FolderCount  int    `json:"foldercount"`
 	FileCount    int    `json:"filecount"`
+	Parent       string `json:"parent"`
 }
 
 type FileUpload struct {
@@ -82,11 +83,12 @@ type FileUploadChunkResponse struct {
 }
 
 type ShareLink struct {
-	Token   string `json:"token,omitempty"`
-	Path    string `json:"path,omitempty"`
-	Name    string `json:"name,omitempty"`
-	Expire  int    `json:"expire"`
-	FullURL string `json:"fullurl,omitempty"`
+	Token    string `json:"token,omitempty"`
+	Path     string `json:"path,omitempty"`
+	Name     string `json:"name,omitempty"`
+	Expire   int    `json:"expire"`
+	FullURL  string `json:"fullurl,omitempty"`
+	Internal int    `json:"internal"` // Undocumented
 }
 
 func EncodePath(path string) string {

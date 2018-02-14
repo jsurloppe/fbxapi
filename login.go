@@ -49,8 +49,9 @@ type Authorization struct {
 }
 
 type AuthorizationState struct {
-	Status    string `json:"status"`
-	Challenge string `json:"challenge"`
+	Status       string `json:"status"`
+	Challenge    string `json:"challenge"`
+	PasswordSalt string `json:"password_salt"` // Undocumented
 }
 
 func (resp *AuthorizationState) isGranted() bool {

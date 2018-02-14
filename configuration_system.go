@@ -12,6 +12,9 @@ type SystemConfig struct {
 	TempCPUb         int    `json:"temp_cpub"`
 	FanRPM           int    `json:"fan_rpm"`
 	BoxAuthenticated bool   `json:"box_authenticated"`
+	DiskStatus       string `json:"disk_status"`
+	BoxFlavor        string `json:"box_flavor"`
+	UserMainStorage  string `json:"user_main_storage"`
 }
 
 var SystemEP = &Endpoint{

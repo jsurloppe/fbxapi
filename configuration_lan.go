@@ -20,7 +20,7 @@ type LanConfig struct {
 	NameDNS     string `json:"name_dns"`
 	NameMDNS    string `json:"name_mdns"`
 	NameNETBIOS string `json:"name_netbios"`
-	Type        string `json:"type"` // maybe mode? need testing
+	Mode        string `json:"mode"` // documentation is wrong, field called type
 }
 
 type InterfaceStat struct {
@@ -61,6 +61,7 @@ type LanHost struct {
 	LastActivity      int                     `json:"last_activity"`
 	Names             []LanHostName           `json:"names"`
 	L3Connectivities  []LanHostL3Connectivity `json:"l3connectivities"`
+	Interface         string                  `json:"interface"` // not documented
 }
 
 // LanConfigEP endpoint definition

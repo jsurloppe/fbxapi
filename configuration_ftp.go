@@ -1,13 +1,14 @@
 package fbxapi
 
 type FTPConfig struct {
-	Enabled             bool `json:"enabled"`
-	AllowAnonymous      bool `json:"allow_anonymous"`
-	AllowAnonymousWrite bool `json:"allow_anonymous_write"`
-	WeakPassword        bool `json:"weak_password"`
-	AllowRemoteAccess   bool `json:"allow_remote_access"`
-	PortCtrl            int  `json:"port_ctrl"`
-	PortData            int  `json:"port_data"`
+	Enabled             bool   `json:"enabled"`
+	AllowAnonymous      bool   `json:"allow_anonymous"`
+	AllowAnonymousWrite bool   `json:"allow_anonymous_write"`
+	WeakPassword        bool   `json:"weak_password"`
+	AllowRemoteAccess   bool   `json:"allow_remote_access"`
+	PortCtrl            int    `json:"port_ctrl"`
+	PortData            int    `json:"port_data"`
+	RemoteDomain        string `json:"remote_domain"`
 }
 
 var CurrentFTPConfigEP = &Endpoint{
